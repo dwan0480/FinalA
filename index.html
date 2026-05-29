@@ -2,20 +2,20 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Interactive Pop Art Soup Cans</title>
+  <title>Interactive Soup Cans</title>
 
-  <!-- 这里使用 p5.js。我们所有图形和交互都靠它运行。 -->
+  <!-- p5.js 主库 -->
   <script src="https://cdn.jsdelivr.net/npm/p5@1.9.4/lib/p5.min.js"></script>
+
+  <!-- p5.sound：因为组员代码用了 FFT 和 Amplitude -->
+  <script src="https://cdn.jsdelivr.net/npm/p5@1.9.4/lib/addons/p5.sound.min.js"></script>
 </head>
 
 <body>
-  <!-- 
-    加载顺序很重要：
-    1. soup-can.js 先加载，因为里面会放 SoupCan class
-    2. user-input-mechanic.js 再加载，因为它控制鼠标和键盘交互
-    3. sketch.js 最后加载，因为它负责 setup() 和 draw()
-  -->
-  <script src="soup-can.js"></script>
+  <!-- 组员代码里 cnv.parent("sketch-holder") 需要这个 div -->
+  <div id="sketch-holder"></div>
+
+  <!-- 先加载你的 mechanic 文件，再加载主 sketch -->
   <script src="user-input-mechanic.js"></script>
   <script src="sketch.js"></script>
 </body>
