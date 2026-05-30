@@ -1,167 +1,273 @@
 // sketch.js
-// 这个文件是整个项目的主控制文件。
-// 我把画罐头的代码放在 soup-can.js，把我的 user input 机制放在 user-input-mechanic.js。
-// 这样结构比较清楚，也符合 final project 要求的 modular code。
+// 这个文件是总控制器。
+// 它负责：创建画布、创建 32 个罐头数据、更新音频数据、更新 user input 状态、循环调用绘图函数。
+// 真正画罐头的细节放在 soup-can.js。
+// Time-based mechanic 放在 time-based-mechanic.js。
+// 我的 user input 状态系统放在 user-input-mechanic.js。
 
-let soupCans = [];
+let cans = [];
+let font;
+let audioFile;
+let fft;
+let amp;
+let audioUpload;
+let started = false;
+let seedValue = 42;
+let mode = 0;
+let lastBeat = 0;
+let eventPulse = 0;
+let showBackdoorHud = false;
+let mechanicsEnabled = false;
 
-// 这里先做 9 个不同口味，形成 3 x 3 的 Warhol-style grid。
-// 后面如果小组想扩展成 4 x 4 或更多，只要改这里和 createSoupCanGrid() 就可以。
-let soupFlavours = [
-  "TOMATO",
-  "CHICKEN NOODLE",
-  "ONION",
-  "GREEN PEA",
-  "VEGETABLE",
-  "BEEF",
-  "CELERY",
-  "MUSHROOM",
-  "BLACK BEAN"
+let artScale = 1;
+let artOffsetX = 0;
+let artOffsetY = 0;
+
+const ART_W = 1200;
+const ART_H = 721;
+
+const soupNames = [
+  "CLAM CHOWDER", "CHICKEN NOODLE", "CREAM OF VEGETABLE", "ONION",
+  "GREEN PEA", "SCOTCH BROTH", "VEGETABLE", "SPLIT PEA",
+  "VEGETABLE BEEF", "BEAN WITH BACON", "CHEDDAR CHEESE", "TOMATO RICE",
+  "BEEF", "ASPARAGUS", "CREAM OF CELERY", "BLACK BEAN",
+  "TURKEY NOODLE", "BEEF BROTH", "CHICKEN GUMBO", "TURKEY VEGETABLE",
+  "CHILI BEEF", "VEGETABLE BEAN", "CREAM OF CHICKEN", "CREAM OF MUSHROOM",
+  "PEPPER POT", "CHICKEN", "CONSOMME", "TOMATO",
+  "MINESTRONE", "CHICKEN VEGETABLE", "BEEF NOODLE", "VEGETARIAN VEGETABLE"
 ];
 
 function setup() {
-  createCanvas(windowWidth, windowHeight);
+  const cnv = createCanvas(windowWidth, windowHeight);
+  cnv.parent("sketch-holder");
 
-  rectMode(CENTER);
-  ellipseMode(CENTER);
-  textAlign(CENTER, CENTER);
+  pixelDensity(min(2, window.devicePixelRatio || 1));
+  textFont("Arial");
 
-  // 创建 3 x 3 罐头网格
-  createSoupCanGrid();
+  // 组员原代码使用 HSB，这里保留。
+  colorMode(HSB, 360, 100, 100, 100);
 
-  // 初始化我的 user input mechanic
-  setupUserInputMechanic(soupCans);
+  setupAudio();
+  setupHiddenUpload();
+  buildGrid();
+}
+
+function setupAudio() {
+  fft = new p5.FFT(0.82, 64);
+  amp = new p5.Amplitude(0.85);
+}
+
+function setupHiddenUpload() {
+  audioUpload = createFileInput(handleFile);
+  audioUpload.hide();
+}
+
+function buildGrid() {
+  randomSeed(seedValue);
+  noiseSeed(seedValue);
+
+  cans = [];
+
+  const cols = 8;
+  const rows = 4;
+
+  const marginX = ART_W * 0.03;
+  const marginY = ART_H * 0.035;
+  const gapX = ART_W * 0.015;
+  const gapY = ART_H * 0.035;
+
+  const cellW = (ART_W - marginX * 2 - gapX * (cols - 1)) / cols;
+  const cellH = (ART_H - marginY * 2 - gapY * (rows - 1)) / rows;
+
+  for (let y = 0; y < rows; y++) {
+    for (let x = 0; x < cols; x++) {
+      const i = y * cols + x;
+
+      cans.push({
+        i: i,
+        x: marginX + x * (cellW + gapX),
+        y: marginY + y * (cellH + gapY),
+        w: cellW,
+        h: cellH,
+        label: soupNames[i],
+
+        hueOffset: random(-18, 18),
+        wobble: random(0.6, 1.7),
+        grain: random(0.15, 0.85),
+
+        // 原代码里有随机开盖。
+        // 后面在 drawCan() 里会降低随机开盖的影响，
+        // 让“用户点击开盖”成为更明显的 user input 结果。
+        lidOpen: random() < 0.34 ? random(0.35, 0.95) : random(0, 0.12),
+
+        crush: random(0.03, 0.42),
+        rust: random(0.08, 0.86),
+        damage: random(0.02, 0.68),
+        openResponsiveness: random(0.15, 0.75),
+        phase: random(TWO_PI),
+        seed: random(1000)
+      });
+    }
+  }
+
+  // 给每一个 can 加上我的 user input 状态。
+  setupTimeBasedMechanic();
+  setupUserInputStates();
 }
 
 function draw() {
-  drawBackground();
+  updateArtworkFit();
 
-  drawHeader();
+  const t = millis() * 0.001;
+  const spectrum = started ? fft.analyze() : [];
 
-  // 先更新我的 user input 状态，比如鼠标靠近、点击、键盘换色
-  updateUserInputMechanic();
+  const level = mechanicsEnabled && started ? amp.getLevel() : 0;
+  const bass = mechanicsEnabled && started ? fft.getEnergy("bass") / 255 : 0;
+  const mid = mechanicsEnabled && started ? fft.getEnergy("mid") / 255 : 0;
+  const treble = mechanicsEnabled && started ? fft.getEnergy("treble") / 255 : 0;
 
-  // 之后组员可以在这里接入他们自己的 mechanic：
-  // updateAudioMechanic();
-  // updateTimeMechanic();
-  // updatePerlinRandomMechanic();
-
-  // 画所有罐头
-  for (let i = 0; i < soupCans.length; i++) {
-    soupCans[i].update();
-    soupCans[i].display();
+  if (mechanicsEnabled && millis() - lastBeat > 900) {
+    lastBeat = millis();
+    eventPulse = random(0.35, 1);
   }
 
-  drawFooterInstructions();
-}
+  eventPulse *= 0.92;
 
-function createSoupCanGrid() {
-  soupCans = [];
+  background(0, 0, 10);
 
-  let cols = 3;
-  let rows = 3;
-
-  // 顶部留给标题，底部留给操作说明
-  let topSpace = 105;
-  let bottomSpace = 65;
-
-  let usableHeight = height - topSpace - bottomSpace;
-
-  let cellW = width / cols;
-  let cellH = usableHeight / rows;
-
-  // panel 是每个罐头后面的“画布框”
-  // 这里根据窗口大小自动计算，避免画面太挤
-  let panelW = min(cellW * 0.58, cellH * 0.78);
-  let panelH = panelW * 1.15;
-
-  let canW = panelW * 0.50;
-  let canH = panelH * 0.70;
-
-  let index = 0;
-
-  for (let row = 0; row < rows; row++) {
-    for (let col = 0; col < cols; col++) {
-      let x = cellW * col + cellW / 2;
-      let y = topSpace + cellH * row + cellH / 2;
-
-      let flavour = soupFlavours[index];
-
-      let newCan = new SoupCan(x, y, panelW, panelH, canW, canH, flavour);
-      soupCans.push(newCan);
-
-      index++;
-    }
-  }
-}
-
-function drawBackground() {
-  background(242, 239, 232);
-
-  // 这里画一些非常淡的 Pop Art dot texture，让背景不那么空。
-  // 这不是复杂算法，只是两个 for loop。
-  noStroke();
-
-  for (let x = 20; x < width; x += 36) {
-    for (let y = 20; y < height; y += 36) {
-      fill(220, 30);
-      ellipse(x, y, 4, 4);
-    }
-  }
-}
-
-function drawHeader() {
   push();
 
-  noStroke();
+  translate(artOffsetX, artOffsetY);
+  scale(artScale);
 
-  fill(25);
-  textSize(26);
-  textStyle(BOLD);
-  text("Interactive Soup Can Grid", width / 2, 34);
+  drawWall();
 
-  fill(80);
-  textSize(13);
-  textStyle(NORMAL);
-  text("User Input Mechanic: hover, click, and keyboard colour modes", width / 2, 62);
+  // 每一帧更新我的 user input 状态系统。
+  updateTimeBasedMechanic();
+  updateUserInputStates();
 
-  // 当前配色模式显示出来，方便演示时说明
-  fill(120);
-  textSize(12);
-  text("Current palette: " + getCurrentPaletteName(), width / 2, 84);
+  for (let i = 0; i < cans.length; i++) {
+    drawFramedCan(cans[i], t, level, bass, mid, treble, spectrum);
+  }
+
+  if (showBackdoorHud) {
+    drawControls(level, bass, mid, treble);
+  }
 
   pop();
+
+  drawTopInstruction();
 }
 
-function drawFooterInstructions() {
+function updateArtworkFit() {
+  artScale = min(width / ART_W, height / ART_H);
+  artOffsetX = (width - ART_W * artScale) * 0.5;
+  artOffsetY = (height - ART_H * artScale) * 0.5;
+}
+
+function artMouseX() {
+  return (mouseX - artOffsetX) / artScale;
+}
+
+function artMouseY() {
+  return (mouseY - artOffsetY) / artScale;
+}
+
+function drawWall() {
+  noStroke();
+
+  fill(28, 8, 96);
+  rect(0, 0, ART_W, ART_H);
+
+  // 简单墙面横纹。
+  for (let i = 0; i < 70; i++) {
+    const y = (i * 37) % ART_H;
+
+    fill(35, 5, 88, 8);
+    rect(0, y, ART_W, 2);
+  }
+}
+
+function drawTopInstruction() {
   push();
 
   noStroke();
-  fill(40);
-  textSize(13);
+  const panelW = min(width - 28, 920);
 
-  let instructionText = "Move mouse near a can = focus effect  |  Click a can = open and pour  |  Press 1 / 2 / 3 = change palette  |  Press R = reset";
-  text(instructionText, width / 2, height - 28);
+  fill(0, 0, 98, 88);
+  rect(14, 14, panelW, 44, 8);
+
+  fill(0, 0, 15);
+  textAlign(LEFT, CENTER);
+  textSize(12);
+  textStyle(NORMAL);
+  text(
+    "Time: lids open in batches every few seconds. User Input: hover, click open/pour, C = close all, M = mechanics, 1-4 = palette",
+    28,
+    36
+  );
 
   pop();
 }
 
 function mousePressed() {
-  // 鼠标点击交给 user-input-mechanic.js 处理。
+  // 保留原来的点击启动音频逻辑。
+  if (!started) {
+    userStartAudio();
+    started = true;
+  }
+
+  // 我的 user input 点击逻辑。
   handleUserInputMousePressed();
 }
 
+function handleFile(file) {
+  if (file.type !== "audio") {
+    return;
+  }
+
+  if (audioFile) {
+    audioFile.stop();
+  }
+
+  audioFile = loadSound(file.data, function () {
+    audioFile.loop();
+    fft.setInput(audioFile);
+    amp.setInput(audioFile);
+  });
+}
+
 function keyPressed() {
-  // 键盘输入也交给 user-input-mechanic.js 处理。
+  if (key >= "1" && key <= "4") {
+    mode = int(key) - 1;
+  }
+
+  if (key === "r" || key === "R") {
+    seedValue = floor(random(100000));
+    buildGrid();
+  }
+
+  if (key === " ") {
+    if (audioFile && audioFile.isPlaying()) {
+      audioFile.pause();
+    } else if (audioFile) {
+      audioFile.loop();
+    }
+  }
+
+  if (key === "u" || key === "U") {
+    audioUpload.elt.click();
+  }
+
+  if (key === "h" || key === "H") {
+    showBackdoorHud = !showBackdoorHud;
+  }
+
+  // 我的 user input 键盘逻辑。
   handleUserInputKeyPressed(key);
 }
 
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
-
-  // 窗口变化后重新排版，保证 responsive。
-  createSoupCanGrid();
-
-  // 因为罐头重新创建了，所以也要重新交给 user input mechanic。
-  setupUserInputMechanic(soupCans);
+  buildGrid();
 }
