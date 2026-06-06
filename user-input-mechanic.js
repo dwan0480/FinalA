@@ -107,10 +107,8 @@ function handleUserInputKeyPressed(k) {
     closeAllUserInputCans();
   }
 
-  // M = toggle mechanics，让整体 mechanic 动画开关更清楚。
-  if (k === "m" || k === "M") {
-    mechanicsEnabled = !mechanicsEnabled;
-  }
+  // M is handled by audio-mechanic.js from sketch.js.
+  // It now toggles live microphone input instead of disabling all mechanics.
 }
 
 function closeAllUserInputCans() {

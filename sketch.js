@@ -1,6 +1,6 @@
 // sketch.js
 // 这个文件是总控制器。
-// 它负责：创建画布、创建 32 个罐头数据、更新各 mechanic 状态、循环调用绘图函数。
+// 它负责：创建画布、创建 32 个罐头数据、更新各个 mechanic 状态、循环调用绘图函数。
 // 真正画罐头的细节放在 soup-can.js。
 // Time-based mechanic 放在 time-based-mechanic.js。
 // Audio mechanic 放在 audio-mechanic.js。
@@ -11,7 +11,7 @@ let font;
 let seedValue = 42;
 let mode = 0;
 let showBackdoorHud = false;
-let mechanicsEnabled = false;
+let mechanicsEnabled = true;
 
 let artScale = 1;
 let artOffsetX = 0;
@@ -20,25 +20,13 @@ let artOffsetY = 0;
 const ART_W = 1200;
 const ART_H = 721;
 
-// Gallery label layout.
-// updateArtworkFit() reserves space for this card,
-// so the instruction text will not cover the artwork grid.
+// Museum-style interaction label.
+// updateArtworkFit() reserves space for this panel so it does not cover the artwork.
 let labelLayout = {
   x: 0,
   y: 0,
-  w: 340,
-  h: 230,
-  mode: "side"
-};
-
-// Audio controls are HTML elements, not canvas text.
-// updateArtworkFit() reserves space for this area as well,
-// so the controls and museum label never cover the soup-can artwork.
-let audioControlLayout = {
-  x: 0,
-  y: 0,
-  w: 340,
-  h: 214,
+  w: 360,
+  h: 238,
   mode: "side"
 };
 
@@ -122,7 +110,6 @@ function buildGrid() {
 
 function draw() {
   updateArtworkFit();
-  updateAudioControlPanelLayout();
 
   const t = millis() * 0.001;
   const audio = updateAudioMechanic();
@@ -155,50 +142,36 @@ function draw() {
 
 function updateArtworkFit() {
   const margin = 26;
-  const gap = 18;
 
-  // Wide screen: reserve a full right-side gallery zone.
-  // The audio control panel sits at the top of this zone,
-  // and the museum label sits at the bottom.
-  // The soup-can artwork only uses the remaining left area.
+  // Wide screen: reserve a right-side museum label zone.
+  // The soup-can grid is fitted only into the remaining left area,
+  // so the label never covers the artwork.
   if (width > 980) {
     labelLayout.mode = "side";
-    labelLayout.w = constrain(width * 0.25, 310, 390);
+    labelLayout.w = constrain(width * 0.25, 320, 400);
     labelLayout.h = 238;
     labelLayout.x = width - labelLayout.w - margin;
     labelLayout.y = height - labelLayout.h - margin;
 
-    audioControlLayout.mode = "side";
-    audioControlLayout.w = labelLayout.w;
-    audioControlLayout.h = 214;
-    audioControlLayout.x = labelLayout.x;
-    audioControlLayout.y = margin;
-
-    const availableW = max(240, labelLayout.x - margin * 2);
-    const availableH = max(180, height - margin * 2);
+    const availableW = max(260, labelLayout.x - margin * 2);
+    const availableH = max(190, height - margin * 2);
 
     artScale = min(availableW / ART_W, availableH / ART_H);
     artOffsetX = margin + (availableW - ART_W * artScale) * 0.5;
     artOffsetY = margin + (availableH - ART_H * artScale) * 0.5;
   }
 
-  // Narrow screen: reserve a bottom stack for the label and audio controls.
-  // The artwork fits into the area above the stack, so nothing covers the cans.
+  // Narrow screen: place the label below the artwork.
+  // The soup-can grid is fitted into the area above the label.
   else {
     labelLayout.mode = "bottom";
-    labelLayout.w = min(width - margin * 2, 540);
-    labelLayout.h = 220;
+    labelLayout.w = min(width - margin * 2, 560);
+    labelLayout.h = 230;
     labelLayout.x = (width - labelLayout.w) * 0.5;
     labelLayout.y = height - labelLayout.h - margin;
 
-    audioControlLayout.mode = "bottom";
-    audioControlLayout.w = labelLayout.w;
-    audioControlLayout.h = 214;
-    audioControlLayout.x = labelLayout.x;
-    audioControlLayout.y = labelLayout.y - audioControlLayout.h - gap;
-
-    const availableW = max(240, width - margin * 2);
-    const availableH = max(150, audioControlLayout.y - margin * 2);
+    const availableW = max(260, width - margin * 2);
+    const availableH = max(170, labelLayout.y - margin * 2);
 
     artScale = min(availableW / ART_W, availableH / ART_H);
     artOffsetX = margin + (availableW - ART_W * artScale) * 0.5;
@@ -240,9 +213,6 @@ function drawTopInstruction() {
   const panelW = labelLayout.w;
   const panelH = labelLayout.h;
 
-  // Museum-style wall label.
-  // The artwork fitting function reserves space for this panel,
-  // so it should not cover the soup-can grid at any window size.
   rectMode(CORNER);
   textAlign(LEFT, TOP);
   textStyle(NORMAL);
@@ -252,12 +222,11 @@ function drawTopInstruction() {
   fill(0, 0, 0, 24);
   rect(x + 7, y + 9, panelW, panelH, 2);
 
-  // Main paper card.
+  // Warm paper card.
   fill(42, 12, 96, 96);
   rect(x, y, panelW, panelH, 2);
 
-  // Subtle paper fibres.
-  // These use noise() so the card feels textured rather than flat.
+  // Paper fibres.
   for (let i = 0; i < 130; i++) {
     const px = x + 10 + noise(i * 0.71, 1.3) * (panelW - 20);
     const py = y + 10 + noise(i * 0.37, 8.9) * (panelH - 20);
@@ -268,7 +237,7 @@ function drawTopInstruction() {
     line(px, py, px + lineLen, py + noise(i * 0.23) * 2 - 1);
   }
 
-  // Tiny paper speckles.
+  // Small paper speckles.
   for (let i = 0; i < 90; i++) {
     const px = x + noise(i * 1.91, 12.4) * panelW;
     const py = y + noise(i * 1.17, 23.6) * panelH;
@@ -278,18 +247,16 @@ function drawTopInstruction() {
     circle(px, py, 1.1);
   }
 
-  // Thin museum-label border and divider.
+  // Thin border and divider.
   noFill();
   stroke(0, 0, 18, 18);
   strokeWeight(1);
   rect(x, y, panelW, panelH, 2);
-
-  stroke(0, 0, 18, 18);
   line(x + 18, y + 63, x + panelW - 18, y + 63);
 
   noStroke();
 
-  // Artwork title.
+  // Title.
   fill(0, 0, 10, 94);
   textStyle(BOLD);
   textSize(14);
@@ -301,14 +268,14 @@ function drawTopInstruction() {
   fill(0, 0, 22, 72);
   text("After Andy Warhol’s Campbell’s Soup Cans", x + 18, y + 40);
 
-  // Short description.
+  // Description.
   fill(0, 0, 14, 88);
   textSize(10.5);
   textLeading(15);
 
   const description =
     "A coded reinterpretation of the repeated soup-can image. " +
-    "Each can responds through time, input, audio and controlled randomness.";
+    "Each can responds through time, mouse input, audio and controlled randomness.";
 
   text(description, x + 18, y + 78, panelW - 36, 46);
 
@@ -324,12 +291,14 @@ function drawTopInstruction() {
   textSize(10);
   textLeading(14);
 
+  const sourceMode = typeof getAudioSourceMode === "function" ? getAudioSourceMode() : "off";
   const instructions =
     "Move mouse: inspect cans\n" +
     "Click: open / pour / close\n" +
-    "Use the Audio Control panel for mic / file input.\n" +
-    "Loud high-frequency sound squeezes and cracks cans.\n" +
-    "C: close all   1–4: palette   R: rebuild";
+    "M: microphone on / off   U: upload audio\n" +
+    "Space: play / pause uploaded audio\n" +
+    "C: close all   1–4: palette   R: rebuild\n" +
+    "Audio source: " + sourceMode;
 
   text(instructions, x + 18, y + 145, panelW - 36, panelH - 152);
 
@@ -343,7 +312,7 @@ function drawTopInstruction() {
 }
 
 function mousePressed() {
-  // 浏览器需要用户先点击一次，音频系统才可以启动。
+  // 浏览器需要用户手势才能启动 Web Audio。
   startAudioMechanicOnUserGesture();
 
   // 我的 user input 点击逻辑。
@@ -366,6 +335,11 @@ function keyPressed() {
 
   if (key === "u" || key === "U") {
     openAudioUploadDialog();
+  }
+
+  // M 现在只负责开关麦克风实时输入，不再开关全部 mechanic。
+  if (key === "m" || key === "M") {
+    toggleMicrophoneInput();
   }
 
   if (key === "h" || key === "H") {

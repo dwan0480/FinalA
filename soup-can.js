@@ -16,11 +16,11 @@ function drawFramedCan(can, t, level, bass, mid, treble, spectrum, crack) {
   const crackImpact = crack || 0;
 
   const jump = mechanicsEnabled
-    ? (noise(can.seed + 1, t * 8) - 0.5 + eventPulse * 0.3 + crackImpact * 0.55) * (2 + bass * 14 + crackImpact * 22) * can.w / 140
+    ? (noise(can.seed + 1, t * 8) - 0.5 + eventPulse * 0.25 + crackImpact * 0.45) * (1.2 + bass * 10 + crackImpact * 20) * can.w / 140
     : 0;
 
   const shake = mechanicsEnabled
-    ? sin(t * (10 + treble * 44 + crackImpact * 38) + can.phase) * (0.6 + treble * 5 + hover * 4 + crackImpact * 9)
+    ? sin(t * (10 + treble * 36 + crackImpact * 32) + can.phase) * (0.35 + treble * 3.6 + hover * 4 + crackImpact * 8)
     : 0;
 
   const mx = map(mxArt, 0, ART_W, -1, 1);
@@ -53,9 +53,9 @@ function drawFramedCan(can, t, level, bass, mid, treble, spectrum, crack) {
   // hover / selected 会让罐头微微放大。
   scale(1 + hover * 0.045 + selected * 0.035 + clickShake * 0.035 + timePulse * 0.055);
 
-  // Audio pressure: high volume + high treble squeezes the can from the sides.
-  // This makes the microphone interaction feel physical rather than only decorative.
-  if (mechanicsEnabled) {
+  // Audio pressure: only strong sound creates visible squeeze.
+  // Low volume / low frequency values are thresholded in audio-mechanic.js.
+  if (mechanicsEnabled && crackImpact > 0.02) {
     scale(1 - crackImpact * 0.13, 1 + crackImpact * 0.075);
   }
 
@@ -108,9 +108,9 @@ function drawCan(can, t, level, bass, mid, treble, n, hover, spectrum, crackImpa
     1
   );
 
-  const crushAmt = constrain(can.crush + level * 1.7 + eventPulse * 0.08 + crackImpact * 0.72, 0, 0.92);
-  const rustAmt = constrain(can.rust + n * 0.18 + treble * 0.12, 0, 1);
-  const damageAmt = constrain(can.damage + bass * 0.22 + hover * 0.1 + crackImpact * 0.75, 0, 1);
+  const crushAmt = constrain(can.crush + level * 0.9 + eventPulse * 0.06 + crackImpact * 0.72, 0, 0.92);
+  const rustAmt = constrain(can.rust + n * 0.18 + treble * 0.08, 0, 1);
+  const damageAmt = constrain(can.damage + bass * 0.12 + hover * 0.1 + crackImpact * 0.75, 0, 1);
 
   const dent = crushAmt * w * 0.12;
   const waist = mechanicsEnabled ? sin(t * 1.8 + can.phase) * level * w * 0.05 : 0;
@@ -324,7 +324,7 @@ function drawRust(can, x, y, w, h, rustAmt) {
 }
 
 function drawCracks(can, x, y, w, h, crackImpact, damageAmt) {
-  if (crackImpact < 0.03) {
+  if (crackImpact < 0.04) {
     return;
   }
 
@@ -339,8 +339,8 @@ function drawCracks(can, x, y, w, h, crackImpact, damageAmt) {
     const len = w * (0.12 + crackImpact * 0.34 + noise(can.seed + 250, i) * 0.14);
     const angle = -0.9 + noise(can.seed + 260, i) * 1.8;
 
-    stroke(0, 0, 8, 26 + crackImpact * 58 + damageAmt * 18);
-    strokeWeight(0.8 + crackImpact * 1.25);
+    stroke(0, 0, 8, 22 + crackImpact * 62 + damageAmt * 14);
+    strokeWeight(0.7 + crackImpact * 1.35);
 
     beginShape();
     for (let j = 0; j < 5; j++) {
@@ -352,8 +352,7 @@ function drawCracks(can, x, y, w, h, crackImpact, damageAmt) {
     }
     endShape();
 
-    // Small bright edge beside the dark crack, so the split reads like bent metal.
-    stroke(0, 0, 96, 9 + crackImpact * 18);
+    stroke(0, 0, 96, 8 + crackImpact * 18);
     strokeWeight(0.55);
     line(startX + 1.4, startY + 1.2, startX + cos(angle) * len * 0.72 + 1.4, startY + sin(angle) * len * 0.72 + 1.2);
   }

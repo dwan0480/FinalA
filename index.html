@@ -11,14 +11,14 @@
     p5.js 主库。
     我们用它来画 canvas、图形、文字、鼠标和键盘交互。
   -->
-  <script src="libraries/p5.min.js"></script>
+  <script src="p5.min.js"></script>
 
   <!-- 
     p5.sound 库。
     因为组员代码里用了 p5.FFT() 和 p5.Amplitude()，
     所以必须加载这个，否则页面会报错。
   -->
-  <script src="libraries/p5.sound.min.js"></script>
+  <script src="p5.sound.min.js"></script>
 
   <style>
     html, body {
@@ -63,10 +63,10 @@
        drawUserInputLiquid()
 
     3. audio-mechanic.js
-       先加载 audio 状态函数，例如：
+       加载 audio 状态函数，例如：
        setupAudioMechanic()
        updateAudioMechanic()
-       toggleAudioPlayback()
+       toggleMicrophoneInput()
        openAudioUploadDialog()
 
     4. soup-can.js
@@ -74,7 +74,7 @@
        因为 soup-can.js 会调用 mechanic 文件里的函数。
 
     5. sketch.js
-       最后加载主控制器。
+       最后加载主控制器.
        它负责 setup(), draw(), buildGrid() 等整体流程。
   -->
   <script src="time-based-mechanic.js"></script>
