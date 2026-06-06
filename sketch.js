@@ -31,6 +31,17 @@ let labelLayout = {
   mode: "side"
 };
 
+// Audio controls are HTML elements, not canvas text.
+// updateArtworkFit() reserves space for this area as well,
+// so the controls and museum label never cover the soup-can artwork.
+let audioControlLayout = {
+  x: 0,
+  y: 0,
+  w: 340,
+  h: 214,
+  mode: "side"
+};
+
 const soupNames = [
   "CLAM CHOWDER", "CHICKEN NOODLE", "CREAM OF VEGETABLE", "ONION",
   "GREEN PEA", "SCOTCH BROTH", "VEGETABLE", "SPLIT PEA",
@@ -111,6 +122,7 @@ function buildGrid() {
 
 function draw() {
   updateArtworkFit();
+  updateAudioControlPanelLayout();
 
   const t = millis() * 0.001;
   const audio = updateAudioMechanic();
@@ -129,7 +141,7 @@ function draw() {
   updateUserInputStates();
 
   for (let i = 0; i < cans.length; i++) {
-    drawFramedCan(cans[i], t, audio.level, audio.bass, audio.mid, audio.treble, audio.spectrum);
+    drawFramedCan(cans[i], t, audio.level, audio.bass, audio.mid, audio.treble, audio.spectrum, audio.crack);
   }
 
   if (showBackdoorHud) {
@@ -143,15 +155,24 @@ function draw() {
 
 function updateArtworkFit() {
   const margin = 26;
+  const gap = 18;
 
-  // Wide screen: reserve a right-side gallery-label zone.
-  // The soup-can artwork only fits into the remaining left area.
+  // Wide screen: reserve a full right-side gallery zone.
+  // The audio control panel sits at the top of this zone,
+  // and the museum label sits at the bottom.
+  // The soup-can artwork only uses the remaining left area.
   if (width > 980) {
     labelLayout.mode = "side";
     labelLayout.w = constrain(width * 0.25, 310, 390);
     labelLayout.h = 238;
     labelLayout.x = width - labelLayout.w - margin;
     labelLayout.y = height - labelLayout.h - margin;
+
+    audioControlLayout.mode = "side";
+    audioControlLayout.w = labelLayout.w;
+    audioControlLayout.h = 214;
+    audioControlLayout.x = labelLayout.x;
+    audioControlLayout.y = margin;
 
     const availableW = max(240, labelLayout.x - margin * 2);
     const availableH = max(180, height - margin * 2);
@@ -161,8 +182,8 @@ function updateArtworkFit() {
     artOffsetY = margin + (availableH - ART_H * artScale) * 0.5;
   }
 
-  // Narrow screen: reserve a bottom gallery-label zone.
-  // The soup-can artwork fits into the area above the label.
+  // Narrow screen: reserve a bottom stack for the label and audio controls.
+  // The artwork fits into the area above the stack, so nothing covers the cans.
   else {
     labelLayout.mode = "bottom";
     labelLayout.w = min(width - margin * 2, 540);
@@ -170,8 +191,14 @@ function updateArtworkFit() {
     labelLayout.x = (width - labelLayout.w) * 0.5;
     labelLayout.y = height - labelLayout.h - margin;
 
+    audioControlLayout.mode = "bottom";
+    audioControlLayout.w = labelLayout.w;
+    audioControlLayout.h = 214;
+    audioControlLayout.x = labelLayout.x;
+    audioControlLayout.y = labelLayout.y - audioControlLayout.h - gap;
+
     const availableW = max(240, width - margin * 2);
-    const availableH = max(160, labelLayout.y - margin * 2);
+    const availableH = max(150, audioControlLayout.y - margin * 2);
 
     artScale = min(availableW / ART_W, availableH / ART_H);
     artOffsetX = margin + (availableW - ART_W * artScale) * 0.5;
@@ -179,7 +206,7 @@ function updateArtworkFit() {
   }
 
   // Safety for very small browser windows.
-  artScale = max(0.12, artScale);
+  artScale = max(0.10, artScale);
 }
 
 function artMouseX() {
@@ -300,9 +327,9 @@ function drawTopInstruction() {
   const instructions =
     "Move mouse: inspect cans\n" +
     "Click: open / pour / close\n" +
-    "C: close all cans\n" +
-    "U: upload audio   Space: play / pause\n" +
-    "1–4: colour palette   R: rebuild grid";
+    "Use the Audio Control panel for mic / file input.\n" +
+    "Loud high-frequency sound squeezes and cracks cans.\n" +
+    "C: close all   1–4: palette   R: rebuild";
 
   text(instructions, x + 18, y + 145, panelW - 36, panelH - 152);
 

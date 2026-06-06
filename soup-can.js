@@ -3,7 +3,7 @@
 // 它保留组员代码里更精细的罐头绘制方式：frame、label、金属质感、锈迹、凹痕、开盖等。
 // sketch.js 只负责调用这里的 drawFramedCan()。
 
-function drawFramedCan(can, t, level, bass, mid, treble, spectrum) {
+function drawFramedCan(can, t, level, bass, mid, treble, spectrum, crack) {
   const mxArt = artMouseX();
   const myArt = artMouseY();
 
@@ -13,13 +13,14 @@ function drawFramedCan(can, t, level, bass, mid, treble, spectrum) {
   const timePulse = getTimePulse(can);
 
   const n = noise(can.seed, mechanicsEnabled ? t * 0.7 : 0.7);
+  const crackImpact = crack || 0;
 
   const jump = mechanicsEnabled
-    ? (noise(can.seed + 1, t * 8) - 0.5 + eventPulse * 0.3) * (2 + bass * 14) * can.w / 140
+    ? (noise(can.seed + 1, t * 8) - 0.5 + eventPulse * 0.3 + crackImpact * 0.55) * (2 + bass * 14 + crackImpact * 22) * can.w / 140
     : 0;
 
   const shake = mechanicsEnabled
-    ? sin(t * (10 + treble * 44) + can.phase) * (0.6 + treble * 5 + hover * 4)
+    ? sin(t * (10 + treble * 44 + crackImpact * 38) + can.phase) * (0.6 + treble * 5 + hover * 4 + crackImpact * 9)
     : 0;
 
   const mx = map(mxArt, 0, ART_W, -1, 1);
@@ -52,9 +53,15 @@ function drawFramedCan(can, t, level, bass, mid, treble, spectrum) {
   // hover / selected 会让罐头微微放大。
   scale(1 + hover * 0.045 + selected * 0.035 + clickShake * 0.035 + timePulse * 0.055);
 
+  // Audio pressure: high volume + high treble squeezes the can from the sides.
+  // This makes the microphone interaction feel physical rather than only decorative.
+  if (mechanicsEnabled) {
+    scale(1 - crackImpact * 0.13, 1 + crackImpact * 0.075);
+  }
+
   translate(-can.w / 2, -can.h / 2);
 
-  drawCan(can, t, level, bass, mid, treble, n, hover, spectrum);
+  drawCan(can, t, level, bass, mid, treble, n, hover, spectrum, crackImpact);
 
   pop();
 }
@@ -78,7 +85,7 @@ function drawFrame(can) {
   rect(bw, bw, can.w - bw * 2, can.h - bw * 2, 1);
 }
 
-function drawCan(can, t, level, bass, mid, treble, n, hover, spectrum) {
+function drawCan(can, t, level, bass, mid, treble, n, hover, spectrum, crackImpact) {
   const pad = can.w * 0.17;
   const x = pad;
   const y = can.h * 0.08;
@@ -101,9 +108,9 @@ function drawCan(can, t, level, bass, mid, treble, n, hover, spectrum) {
     1
   );
 
-  const crushAmt = constrain(can.crush + level * 1.7 + eventPulse * 0.08, 0, 0.72);
+  const crushAmt = constrain(can.crush + level * 1.7 + eventPulse * 0.08 + crackImpact * 0.72, 0, 0.92);
   const rustAmt = constrain(can.rust + n * 0.18 + treble * 0.12, 0, 1);
-  const damageAmt = constrain(can.damage + bass * 0.22 + hover * 0.1, 0, 1);
+  const damageAmt = constrain(can.damage + bass * 0.22 + hover * 0.1 + crackImpact * 0.75, 0, 1);
 
   const dent = crushAmt * w * 0.12;
   const waist = mechanicsEnabled ? sin(t * 1.8 + can.phase) * level * w * 0.05 : 0;
@@ -141,6 +148,7 @@ function drawCan(can, t, level, bass, mid, treble, n, hover, spectrum) {
   drawAudioLines(x, y, w, h, spectrum, lineAmp);
   drawDents(can, x, y, w, h, crushAmt, damageAmt);
   drawRust(can, x, y, w, h, rustAmt);
+  drawCracks(can, x, y, w, h, crackImpact, damageAmt);
   drawLid(can, x, y, w, h, openAmt, rustAmt, treble);
 
   // 我的 user input 点击结果：倒出液体。
@@ -313,6 +321,44 @@ function drawRust(can, x, y, w, h, rustAmt) {
     fill(11, 80, 20, 10 + rustAmt * 25);
     ellipse(px + r * 0.2, py + r * 0.1, r * 0.6, r * 0.38);
   }
+}
+
+function drawCracks(can, x, y, w, h, crackImpact, damageAmt) {
+  if (crackImpact < 0.03) {
+    return;
+  }
+
+  push();
+  noFill();
+
+  const crackCount = 2 + floor(crackImpact * 5);
+
+  for (let i = 0; i < crackCount; i++) {
+    const startX = x + w * (0.22 + noise(can.seed + 230, i) * 0.56);
+    const startY = y + h * (0.25 + noise(can.seed + 240, i) * 0.52);
+    const len = w * (0.12 + crackImpact * 0.34 + noise(can.seed + 250, i) * 0.14);
+    const angle = -0.9 + noise(can.seed + 260, i) * 1.8;
+
+    stroke(0, 0, 8, 26 + crackImpact * 58 + damageAmt * 18);
+    strokeWeight(0.8 + crackImpact * 1.25);
+
+    beginShape();
+    for (let j = 0; j < 5; j++) {
+      const step = j / 4;
+      const jag = (noise(can.seed + i * 13, j * 2.1, frameCount * 0.02) - 0.5) * w * 0.07 * crackImpact;
+      const px = startX + cos(angle) * len * step + jag;
+      const py = startY + sin(angle) * len * step + (noise(can.seed + 300, i, j) - 0.5) * h * 0.07 * crackImpact;
+      vertex(px, py);
+    }
+    endShape();
+
+    // Small bright edge beside the dark crack, so the split reads like bent metal.
+    stroke(0, 0, 96, 9 + crackImpact * 18);
+    strokeWeight(0.55);
+    line(startX + 1.4, startY + 1.2, startX + cos(angle) * len * 0.72 + 1.4, startY + sin(angle) * len * 0.72 + 1.2);
+  }
+
+  pop();
 }
 
 function drawLid(can, x, y, w, h, openAmt, rustAmt, treble) {
