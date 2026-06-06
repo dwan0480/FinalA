@@ -1,21 +1,15 @@
 // sketch.js
 // 这个文件是总控制器。
-// 它负责：创建画布、创建 32 个罐头数据、更新音频数据、更新 user input 状态、循环调用绘图函数。
+// 它负责：创建画布、创建 32 个罐头数据、更新各 mechanic 状态、循环调用绘图函数。
 // 真正画罐头的细节放在 soup-can.js。
 // Time-based mechanic 放在 time-based-mechanic.js。
+// Audio mechanic 放在 audio-mechanic.js。
 // 我的 user input 状态系统放在 user-input-mechanic.js。
 
 let cans = [];
 let font;
-let audioFile;
-let fft;
-let amp;
-let audioUpload;
-let started = false;
 let seedValue = 42;
 let mode = 0;
-let lastBeat = 0;
-let eventPulse = 0;
 let showBackdoorHud = false;
 let mechanicsEnabled = false;
 
@@ -25,6 +19,17 @@ let artOffsetY = 0;
 
 const ART_W = 1200;
 const ART_H = 721;
+
+// Gallery label layout.
+// updateArtworkFit() reserves space for this card,
+// so the instruction text will not cover the artwork grid.
+let labelLayout = {
+  x: 0,
+  y: 0,
+  w: 340,
+  h: 230,
+  mode: "side"
+};
 
 const soupNames = [
   "CLAM CHOWDER", "CHICKEN NOODLE", "CREAM OF VEGETABLE", "ONION",
@@ -47,19 +52,8 @@ function setup() {
   // 组员原代码使用 HSB，这里保留。
   colorMode(HSB, 360, 100, 100, 100);
 
-  setupAudio();
-  setupHiddenUpload();
+  setupAudioMechanic();
   buildGrid();
-}
-
-function setupAudio() {
-  fft = new p5.FFT(0.82, 64);
-  amp = new p5.Amplitude(0.85);
-}
-
-function setupHiddenUpload() {
-  audioUpload = createFileInput(handleFile);
-  audioUpload.hide();
 }
 
 function buildGrid() {
@@ -119,19 +113,7 @@ function draw() {
   updateArtworkFit();
 
   const t = millis() * 0.001;
-  const spectrum = started ? fft.analyze() : [];
-
-  const level = mechanicsEnabled && started ? amp.getLevel() : 0;
-  const bass = mechanicsEnabled && started ? fft.getEnergy("bass") / 255 : 0;
-  const mid = mechanicsEnabled && started ? fft.getEnergy("mid") / 255 : 0;
-  const treble = mechanicsEnabled && started ? fft.getEnergy("treble") / 255 : 0;
-
-  if (mechanicsEnabled && millis() - lastBeat > 900) {
-    lastBeat = millis();
-    eventPulse = random(0.35, 1);
-  }
-
-  eventPulse *= 0.92;
+  const audio = updateAudioMechanic();
 
   background(0, 0, 10);
 
@@ -147,11 +129,11 @@ function draw() {
   updateUserInputStates();
 
   for (let i = 0; i < cans.length; i++) {
-    drawFramedCan(cans[i], t, level, bass, mid, treble, spectrum);
+    drawFramedCan(cans[i], t, audio.level, audio.bass, audio.mid, audio.treble, audio.spectrum);
   }
 
   if (showBackdoorHud) {
-    drawControls(level, bass, mid, treble);
+    drawControls(audio.level, audio.bass, audio.mid, audio.treble);
   }
 
   pop();
@@ -160,9 +142,44 @@ function draw() {
 }
 
 function updateArtworkFit() {
-  artScale = min(width / ART_W, height / ART_H);
-  artOffsetX = (width - ART_W * artScale) * 0.5;
-  artOffsetY = (height - ART_H * artScale) * 0.5;
+  const margin = 26;
+
+  // Wide screen: reserve a right-side gallery-label zone.
+  // The soup-can artwork only fits into the remaining left area.
+  if (width > 980) {
+    labelLayout.mode = "side";
+    labelLayout.w = constrain(width * 0.25, 310, 390);
+    labelLayout.h = 238;
+    labelLayout.x = width - labelLayout.w - margin;
+    labelLayout.y = height - labelLayout.h - margin;
+
+    const availableW = max(240, labelLayout.x - margin * 2);
+    const availableH = max(180, height - margin * 2);
+
+    artScale = min(availableW / ART_W, availableH / ART_H);
+    artOffsetX = margin + (availableW - ART_W * artScale) * 0.5;
+    artOffsetY = margin + (availableH - ART_H * artScale) * 0.5;
+  }
+
+  // Narrow screen: reserve a bottom gallery-label zone.
+  // The soup-can artwork fits into the area above the label.
+  else {
+    labelLayout.mode = "bottom";
+    labelLayout.w = min(width - margin * 2, 540);
+    labelLayout.h = 220;
+    labelLayout.x = (width - labelLayout.w) * 0.5;
+    labelLayout.y = height - labelLayout.h - margin;
+
+    const availableW = max(240, width - margin * 2);
+    const availableH = max(160, labelLayout.y - margin * 2);
+
+    artScale = min(availableW / ART_W, availableH / ART_H);
+    artOffsetX = margin + (availableW - ART_W * artScale) * 0.5;
+    artOffsetY = margin + (availableH - ART_H * artScale) * 0.5;
+  }
+
+  // Safety for very small browser windows.
+  artScale = max(0.12, artScale);
 }
 
 function artMouseX() {
@@ -191,50 +208,119 @@ function drawWall() {
 function drawTopInstruction() {
   push();
 
-  noStroke();
-  const panelW = min(width - 28, 920);
+  const x = labelLayout.x;
+  const y = labelLayout.y;
+  const panelW = labelLayout.w;
+  const panelH = labelLayout.h;
 
-  fill(0, 0, 98, 88);
-  rect(14, 14, panelW, 44, 8);
-
-  fill(0, 0, 15);
-  textAlign(LEFT, CENTER);
-  textSize(12);
+  // Museum-style wall label.
+  // The artwork fitting function reserves space for this panel,
+  // so it should not cover the soup-can grid at any window size.
+  rectMode(CORNER);
+  textAlign(LEFT, TOP);
   textStyle(NORMAL);
-  text(
-    "Time: lids open in batches every few seconds. User Input: hover, click open/pour, C = close all, M = mechanics, 1-4 = palette",
-    28,
-    36
-  );
+  noStroke();
+
+  // Soft shadow.
+  fill(0, 0, 0, 24);
+  rect(x + 7, y + 9, panelW, panelH, 2);
+
+  // Main paper card.
+  fill(42, 12, 96, 96);
+  rect(x, y, panelW, panelH, 2);
+
+  // Subtle paper fibres.
+  // These use noise() so the card feels textured rather than flat.
+  for (let i = 0; i < 130; i++) {
+    const px = x + 10 + noise(i * 0.71, 1.3) * (panelW - 20);
+    const py = y + 10 + noise(i * 0.37, 8.9) * (panelH - 20);
+    const lineLen = noise(i * 0.19, 4.2) * 18 + 4;
+
+    stroke(35, 10, 35, 6);
+    strokeWeight(0.45);
+    line(px, py, px + lineLen, py + noise(i * 0.23) * 2 - 1);
+  }
+
+  // Tiny paper speckles.
+  for (let i = 0; i < 90; i++) {
+    const px = x + noise(i * 1.91, 12.4) * panelW;
+    const py = y + noise(i * 1.17, 23.6) * panelH;
+
+    noStroke();
+    fill(0, 0, 20, 5);
+    circle(px, py, 1.1);
+  }
+
+  // Thin museum-label border and divider.
+  noFill();
+  stroke(0, 0, 18, 18);
+  strokeWeight(1);
+  rect(x, y, panelW, panelH, 2);
+
+  stroke(0, 0, 18, 18);
+  line(x + 18, y + 63, x + panelW - 18, y + 63);
+
+  noStroke();
+
+  // Artwork title.
+  fill(0, 0, 10, 94);
+  textStyle(BOLD);
+  textSize(14);
+  text("Interactive Soup Cans", x + 18, y + 18);
+
+  // Artwork reference.
+  textStyle(NORMAL);
+  textSize(10.5);
+  fill(0, 0, 22, 72);
+  text("After Andy Warhol’s Campbell’s Soup Cans", x + 18, y + 40);
+
+  // Short description.
+  fill(0, 0, 14, 88);
+  textSize(10.5);
+  textLeading(15);
+
+  const description =
+    "A coded reinterpretation of the repeated soup-can image. " +
+    "Each can responds through time, input, audio and controlled randomness.";
+
+  text(description, x + 18, y + 78, panelW - 36, 46);
+
+  // Interaction heading.
+  fill(0, 0, 10, 92);
+  textStyle(BOLD);
+  textSize(10.5);
+  text("How to interact", x + 18, y + 126);
+
+  // Interaction instructions.
+  textStyle(NORMAL);
+  fill(0, 0, 16, 86);
+  textSize(10);
+  textLeading(14);
+
+  const instructions =
+    "Move mouse: inspect cans\n" +
+    "Click: open / pour / close\n" +
+    "C: close all cans\n" +
+    "U: upload audio   Space: play / pause\n" +
+    "1–4: colour palette   R: rebuild grid";
+
+  text(instructions, x + 18, y + 145, panelW - 36, panelH - 152);
+
+  // Bottom metadata line.
+  textAlign(RIGHT, BOTTOM);
+  textSize(9);
+  fill(0, 0, 32, 56);
+  text("time · input · audio · randomness", x + panelW - 18, y + panelH - 12);
 
   pop();
 }
 
 function mousePressed() {
-  // 保留原来的点击启动音频逻辑。
-  if (!started) {
-    userStartAudio();
-    started = true;
-  }
+  // 浏览器需要用户先点击一次，音频系统才可以启动。
+  startAudioMechanicOnUserGesture();
 
   // 我的 user input 点击逻辑。
   handleUserInputMousePressed();
-}
-
-function handleFile(file) {
-  if (file.type !== "audio") {
-    return;
-  }
-
-  if (audioFile) {
-    audioFile.stop();
-  }
-
-  audioFile = loadSound(file.data, function () {
-    audioFile.loop();
-    fft.setInput(audioFile);
-    amp.setInput(audioFile);
-  });
 }
 
 function keyPressed() {
@@ -248,15 +334,11 @@ function keyPressed() {
   }
 
   if (key === " ") {
-    if (audioFile && audioFile.isPlaying()) {
-      audioFile.pause();
-    } else if (audioFile) {
-      audioFile.loop();
-    }
+    toggleAudioPlayback();
   }
 
   if (key === "u" || key === "U") {
-    audioUpload.elt.click();
+    openAudioUploadDialog();
   }
 
   if (key === "h" || key === "H") {
