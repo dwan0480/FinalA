@@ -1,19 +1,19 @@
-function getPerlinColourAmount(can){
+function getPerlinColourAmount(can) {
 
     return noise(
         can.seed + 999,
-        frameCount * 0.003
+        frameCount * 0.01
     );
 
 }
 
-function getPerlinHue(can){
+function getPerlinHue(can) {
 
     const n = getPerlinColourAmount(can);
 
     // 深红 -> 红 -> 橙 -> 金黄
 
-    if(n < 0.25){
+    if (n < 0.25) {
 
         return map(
             n,
@@ -25,7 +25,7 @@ function getPerlinHue(can){
 
     }
 
-    if(n < 0.6){
+    if (n < 0.6) {
 
         return map(
             n,
@@ -47,7 +47,7 @@ function getPerlinHue(can){
 
 }
 
-function getPerlinBrightness(can){
+function getPerlinBrightness(can) {
 
     return map(
         getPerlinColourAmount(can),
@@ -59,13 +59,13 @@ function getPerlinBrightness(can){
 
 }
 
-function getPerlinLabelHue(can){
+function getPerlinLabelHue(can) {
 
     return getPerlinHue(can);
 
 }
 
-function getPerlinLabelBrightness(can){
+function getPerlinLabelBrightness(can) {
 
     return 100;
 
