@@ -11,6 +11,7 @@ function drawFramedCan(can, t, level, bass, mid, treble, spectrum, crack) {
   const selected = getInputSelected(can);
   const clickShake = getInputShake(can);
   const timePulse = getTimePulse(can);
+  
 
   const n = noise(can.seed, mechanicsEnabled ? t * 0.7 : 0.7);
   const crackImpact = crack || 0;
@@ -67,22 +68,77 @@ function drawFramedCan(can, t, level, bass, mid, treble, spectrum, crack) {
 }
 
 function drawFrame(can) {
+
   const bw = can.w * 0.055;
-  const timeFlash = getTimeFrameFlash();
+
+  const frameHue = getPerlinHue(can);
 
   noStroke();
 
-  fill(24 + timeFlash * 28, 34 + timeFlash * 22, 38 + timeFlash * 22);
-  rect(0, 0, can.w, can.h, 1);
+  // 外框
 
-  fill(24 + timeFlash * 42, 44 + timeFlash * 24, 58 + timeFlash * 18);
-  rect(bw * 0.35, bw * 0.35, can.w - bw * 0.7, can.h - bw * 0.7, 1);
+  fill(
+    frameHue,
+    35,
+    25
+  );
 
-  fill(25, 18, 18, 28);
-  rect(bw * 0.95, bw * 0.95, can.w - bw * 1.4, can.h - bw * 1.4, 1);
+  rect(
+    0,
+    0,
+    can.w,
+    can.h,
+    1
+  );
 
-  fill(190, 6, 92);
-  rect(bw, bw, can.w - bw * 2, can.h - bw * 2, 1);
+  // 中框
+
+  fill(
+    frameHue,
+    45,
+    40
+  );
+
+  rect(
+    bw * 0.35,
+    bw * 0.35,
+    can.w - bw * 0.7,
+    can.h - bw * 0.7,
+    1
+  );
+
+  // 阴影
+
+  fill(
+    frameHue,
+    30,
+    15,
+    25
+  );
+
+  rect(
+    bw * 0.95,
+    bw * 0.95,
+    can.w - bw * 1.4,
+    can.h - bw * 1.4,
+    1
+  );
+
+  // 白色背景纸
+
+  fill(
+    frameHue,
+    8,
+    96
+  );
+
+  rect(
+    bw,
+    bw,
+    can.w - bw * 2,
+    can.h - bw * 2,
+    1
+  );
 }
 
 function drawCan(can, t, level, bass, mid, treble, n, hover, spectrum, crackImpact) {
@@ -94,8 +150,11 @@ function drawCan(can, t, level, bass, mid, treble, n, hover, spectrum, crackImpa
 
   const timePalette = getTimePalette(can);
   const timeLabelFlash = getTimeLabelFlash(can);
-  const redHue = (354 + can.hueOffset + mode * 26 + mid * 32 + timePalette * 115) % 360;
-  const paperHue = 36 + can.grain * 10 + treble * 5 + timePalette * 42;
+  const redHue = getPerlinHue(can); 
+  const paperHue =
+    36 +
+    can.grain * 10 +
+    treble * 5;
   const lineAmp = 1 + bass * 3 + hover * 1.5;
 
   const userOpen = getInputOpen(can);
@@ -132,7 +191,11 @@ function drawCan(can, t, level, bass, mid, treble, n, hover, spectrum, crackImpa
   const leftBot = x + dent * 0.25;
   const rightBot = x + w - dent * 0.3;
 
-  fill(205, 5, 78);
+fill(
+    redHue,
+    85,
+    getPerlinBrightness(can)
+);
 
   beginShape();
   vertex(leftTop, y + h * 0.09);
@@ -170,9 +233,17 @@ function drawCan(can, t, level, bass, mid, treble, n, hover, spectrum, crackImpa
 
   textStyle(NORMAL);
   textSize(max(5, w * 0.055));
-  text(timeLabelFlash > 0.45 ? "LIMITED TIME" : "CONDENSED", x + w * 0.5, y + h * 0.44);
+ text(
+    "CONDENSED",
+    x + w * 0.5,
+    y + h * 0.44
+);
 
-  fill((redHue + timeLabelFlash * 80) % 360, 65 + timeLabelFlash * 25, 62 + timeLabelFlash * 25);
+  fill(
+    getPerlinLabelHue(can),
+    75,
+    getPerlinLabelBrightness(can)
+);
   textStyle(BOLD);
   textSize(max(6, w * 0.09));
   drawStackedLabel(can.label, x + w * 0.5, y + h * 0.70, w * 0.9, h * 0.2);
@@ -239,7 +310,11 @@ function drawLabelPaper(can, x, y, w, h, paperHue, redHue, n, mid, crushAmt) {
   bezierVertex(x + w * 0.7, y + h * 0.95, x + w * 0.29, y + h * 0.94, x + pinch, y + h * 0.91);
   endShape(CLOSE);
 
-  fill(redHue, 76, 64 + mid * 18);
+fill(
+    redHue,
+    70,
+    70 + mid * 12
+);
 
   beginShape();
   vertex(x + pinch * 0.4, y + h * 0.22);

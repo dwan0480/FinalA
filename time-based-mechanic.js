@@ -70,8 +70,9 @@ function updateTimeBasedCan(can) {
       openTarget = 1;
       pulseTarget = timeEventStrength * 0.7;
     }
-  } else if (timeEventType === "palette-flash") {
-    paletteTarget = timeEventStrength;
+   } else if (timeEventType === "palette-flash") {
+
+    paletteTarget = 0;
 
     if (timeEventProgress < 0.65 && can.timeBatch === timeEventIndex % 4) {
       openTarget = 0.85;
@@ -99,7 +100,7 @@ function updateTimeBasedCan(can) {
   can.timeOpenTarget = openTarget;
   can.timeOpenAmount = lerp(can.timeOpenAmount, can.timeOpenTarget, 0.13);
   can.timePulseAmount = lerp(can.timePulseAmount, pulseTarget, 0.16);
-  can.timePaletteAmount = lerp(can.timePaletteAmount, paletteTarget, 0.12);
+  can.timePaletteAmount = 0;
   can.timeLabelFlashAmount = lerp(can.timeLabelFlashAmount, labelTarget, 0.22);
 }
 
@@ -112,11 +113,11 @@ function getTimePulse(can) {
 }
 
 function getTimePalette(can) {
-  return can.timePaletteAmount || 0;
+  return 0;
 }
 
 function getTimeLabelFlash(can) {
-  return can.timeLabelFlashAmount || 0;
+  return 0;
 }
 
 function getTimeFrameFlash() {
