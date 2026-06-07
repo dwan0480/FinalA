@@ -88,10 +88,9 @@ function buildGrid() {
         wobble: random(0.6, 1.7),
         grain: random(0.15, 0.85),
 
-        // 原代码里有随机开盖。
-        // 后面在 drawCan() 里会降低随机开盖的影响，
-        // 让“用户点击开盖”成为更明显的 user input 结果。
-        lidOpen: random() < 0.34 ? random(0.35, 0.95) : random(0, 0.12),
+        // 罐头是否打开只由 time-based mechanic 管理。
+        // 所以这里不再随机开盖，避免一开始就有罐头被打开。
+        lidOpen: 0,
 
         crush: random(0.03, 0.42),
         rust: random(0.08, 0.86),
@@ -294,7 +293,8 @@ function drawTopInstruction() {
   const sourceMode = typeof getAudioSourceMode === "function" ? getAudioSourceMode() : "off";
   const instructions =
     "Move mouse: inspect cans\n" +
-    "Click: open / pour / close\n" +
+    "Click closed can: rattle / shake\n" +
+    "Click opened can: flip / pour / burst\n" + +
     "M: microphone on / off   U: upload audio\n" +
     "Space: play / pause uploaded audio\n" +
     "C: close all   1–4: palette   R: rebuild\n" +

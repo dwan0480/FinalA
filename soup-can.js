@@ -2,6 +2,7 @@
 // 这个文件专门负责画面视觉。
 // 它保留组员代码里更精细的罐头绘制方式：frame、label、金属质感、锈迹、凹痕、开盖等。
 // sketch.js 只负责调用这里的 drawFramedCan()。
+// This file was revised with ChatGPT assistance to connect the visual can drawing with the user input mechanic.
 
 function drawFramedCan(can, t, level, bass, mid, treble, spectrum, crack) {
   const mxArt = artMouseX();
@@ -11,7 +12,11 @@ function drawFramedCan(can, t, level, bass, mid, treble, spectrum, crack) {
   const selected = getInputSelected(can);
   const clickShake = getInputShake(can);
   const timePulse = getTimePulse(can);
-  
+
+  // 读取 user input 的新状态。
+  const rattle = getInputRattle(can);
+  const flip = getInputFlip(can);
+  const squeeze = getInputSqueeze(can);
 
   const n = noise(can.seed, mechanicsEnabled ? t * 0.7 : 0.7);
   const crackImpact = crack || 0;
@@ -29,8 +34,16 @@ function drawFramedCan(can, t, level, bass, mid, treble, spectrum, crack) {
 
   const inputTiltDirection = can.inputTiltDirection || 1;
 
-  // 原有的旋转 + 我的 hover/selected/click 状态旋转。
-  const inputRot = (hover * 2.4 + selected * 1.2 + clickShake * 4) * inputTiltDirection;
+  // rattle：点击未打开罐头时，左右快速摇晃。
+  // flip：点击已打开罐头时，慢慢倒过来，幅度比之前更大。
+  const rattleRot = sin(frameCount * 0.9) * rattle * 15;
+  const flipRot = flip * 220;
+
+  const inputRot =
+    (hover * 2.4 + selected * 1.2 + clickShake * 4) * inputTiltDirection +
+    rattleRot +
+    flipRot;
+
   const originalRot = mechanicsEnabled ? (mx * 1.8 + sin(t + can.phase) * 0.6) : 0;
   const rot = radians(originalRot + inputRot);
 
@@ -44,15 +57,29 @@ function drawFramedCan(can, t, level, bass, mid, treble, spectrum, crack) {
 
   push();
 
+  // rattleX / rattleY：点击未打开罐头时像被抖了一下。
+  let rattleX = sin(frameCount * 1.2) * rattle * 8;
+  let rattleY = cos(frameCount * 1.4) * rattle * 4;
+
   translate(
-    can.x + can.w / 2 + jump + shake + clickShake * 4,
-    can.y + can.h / 2 + my * hover * 5 - selected * 3
+    can.x + can.w / 2 + jump + shake + clickShake * 4 + rattleX,
+    can.y + can.h / 2 + my * hover * 5 - selected * 3 + rattleY
   );
 
   rotate(rot);
 
-  // hover / selected 会让罐头微微放大。
-  scale(1 + hover * 0.045 + selected * 0.035 + clickShake * 0.035 + timePulse * 0.055);
+  // 基础缩放：hover / timePulse / rattle 都可以让罐头稍微变大。
+  scale(1 + hover * 0.045 + selected * 0.035 + clickShake * 0.035 + timePulse * 0.055 + rattle * 0.025);
+
+  // squeeze：点击已打开罐头时，罐头会被压扁并回弹。
+  if (squeeze > 0.02) {
+    let squeezeWave = abs(sin(frameCount * 0.28));
+
+    let squeezeX = 1 + squeeze * 0.26 + squeezeWave * squeeze * 0.10;
+    let squeezeY = 1 - squeeze * 0.18 - squeezeWave * squeeze * 0.10;
+
+    scale(squeezeX, squeezeY);
+  }
 
   // Audio pressure: only strong sound creates visible squeeze.
   // Low volume / low frequency values are thresholded in audio-mechanic.js.
@@ -68,77 +95,26 @@ function drawFramedCan(can, t, level, bass, mid, treble, spectrum, crack) {
 }
 
 function drawFrame(can) {
-
   const bw = can.w * 0.055;
-
   const frameHue = getPerlinHue(can);
 
   noStroke();
 
   // 外框
-
-  fill(
-    frameHue,
-    35,
-    25
-  );
-
-  rect(
-    0,
-    0,
-    can.w,
-    can.h,
-    1
-  );
+  fill(frameHue, 35, 25);
+  rect(0, 0, can.w, can.h, 1);
 
   // 中框
-
-  fill(
-    frameHue,
-    45,
-    40
-  );
-
-  rect(
-    bw * 0.35,
-    bw * 0.35,
-    can.w - bw * 0.7,
-    can.h - bw * 0.7,
-    1
-  );
+  fill(frameHue, 45, 40);
+  rect(bw * 0.35, bw * 0.35, can.w - bw * 0.7, can.h - bw * 0.7, 1);
 
   // 阴影
-
-  fill(
-    frameHue,
-    30,
-    15,
-    25
-  );
-
-  rect(
-    bw * 0.95,
-    bw * 0.95,
-    can.w - bw * 1.4,
-    can.h - bw * 1.4,
-    1
-  );
+  fill(frameHue, 30, 15, 25);
+  rect(bw * 0.95, bw * 0.95, can.w - bw * 1.4, can.h - bw * 1.4, 1);
 
   // 白色背景纸
-
-  fill(
-    frameHue,
-    8,
-    96
-  );
-
-  rect(
-    bw,
-    bw,
-    can.w - bw * 2,
-    can.h - bw * 2,
-    1
-  );
+  fill(frameHue, 8, 96);
+  rect(bw, bw, can.w - bw * 2, can.h - bw * 2, 1);
 }
 
 function drawCan(can, t, level, bass, mid, treble, n, hover, spectrum, crackImpact) {
@@ -150,26 +126,31 @@ function drawCan(can, t, level, bass, mid, treble, n, hover, spectrum, crackImpa
 
   const timePalette = getTimePalette(can);
   const timeLabelFlash = getTimeLabelFlash(can);
-  const redHue = getPerlinHue(can); 
-  const paperHue =
-    36 +
-    can.grain * 10 +
-    treble * 5;
+  const redHue = getPerlinHue(can);
+  const paperHue = 36 + can.grain * 10 + treble * 5;
   const lineAmp = 1 + bass * 3 + hover * 1.5;
 
-  const userOpen = getInputOpen(can);
+  // 罐头是否打开只由 time-based mechanic 管理。
+  // user input 不再直接打开罐头，hover 也不能打开罐头。
   const timeOpen = getTimeOpen(can);
+  const openAmt = constrain(timeOpen, 0, 1);
 
-  // 降低随机开盖，让点击开盖成为主要视觉结果。
-  const openAmt = constrain(
-    can.lidOpen * 0.12 + userOpen * 0.88 + timeOpen * 0.72 + bass * can.openResponsiveness * 0.28 + hover * 0.08,
+  // 读取 user input 的压扁程度，让罐身形状也跟着变形。
+  const inputSqueeze = getInputSqueeze(can);
+
+  const crushAmt = constrain(
+    can.crush + level * 0.9 + eventPulse * 0.06 + crackImpact * 0.72 + inputSqueeze * 0.32,
+    0,
+    0.95
+  );
+
+  const rustAmt = constrain(can.rust + n * 0.18 + treble * 0.08, 0, 1);
+
+  const damageAmt = constrain(
+    can.damage + bass * 0.12 + hover * 0.1 + crackImpact * 0.75 + inputSqueeze * 0.22,
     0,
     1
   );
-
-  const crushAmt = constrain(can.crush + level * 0.9 + eventPulse * 0.06 + crackImpact * 0.72, 0, 0.92);
-  const rustAmt = constrain(can.rust + n * 0.18 + treble * 0.08, 0, 1);
-  const damageAmt = constrain(can.damage + bass * 0.12 + hover * 0.1 + crackImpact * 0.75, 0, 1);
 
   const dent = crushAmt * w * 0.12;
   const waist = mechanicsEnabled ? sin(t * 1.8 + can.phase) * level * w * 0.05 : 0;
@@ -191,11 +172,7 @@ function drawCan(can, t, level, bass, mid, treble, n, hover, spectrum, crackImpa
   const leftBot = x + dent * 0.25;
   const rightBot = x + w - dent * 0.3;
 
-fill(
-    redHue,
-    85,
-    getPerlinBrightness(can)
-);
+  fill(redHue, 85, getPerlinBrightness(can));
 
   beginShape();
   vertex(leftTop, y + h * 0.09);
@@ -214,9 +191,6 @@ fill(
   drawCracks(can, x, y, w, h, crackImpact, damageAmt);
   drawLid(can, x, y, w, h, openAmt, rustAmt, treble);
 
-  // 我的 user input 点击结果：倒出液体。
-  drawUserInputLiquid(can, x, y, w, h);
-
   fill(32, 32, 56 + eventPulse * 24);
   ellipse(
     x + w * 0.5 + waist * 0.2,
@@ -233,17 +207,14 @@ fill(
 
   textStyle(NORMAL);
   textSize(max(5, w * 0.055));
- text(
-    "CONDENSED",
-    x + w * 0.5,
-    y + h * 0.44
-);
+  text("CONDENSED", x + w * 0.5, y + h * 0.44);
 
   fill(
     getPerlinLabelHue(can),
     75,
     getPerlinLabelBrightness(can)
-);
+  );
+
   textStyle(BOLD);
   textSize(max(6, w * 0.09));
   drawStackedLabel(can.label, x + w * 0.5, y + h * 0.70, w * 0.9, h * 0.2);
@@ -253,6 +224,10 @@ fill(
   text("SOUP", x + w * 0.5, y + h * 0.88);
 
   drawBottomRim(x, y, w, h, crushAmt, rustAmt);
+
+  // user input 的汁液和爆汁点最后画，避免被 label / 文字盖住。
+  drawUserInputLiquid(can, x, y, w, h);
+  drawUserInputBurst(can, x, y, w, h);
 
   pop();
 }
@@ -310,11 +285,11 @@ function drawLabelPaper(can, x, y, w, h, paperHue, redHue, n, mid, crushAmt) {
   bezierVertex(x + w * 0.7, y + h * 0.95, x + w * 0.29, y + h * 0.94, x + pinch, y + h * 0.91);
   endShape(CLOSE);
 
-fill(
+  fill(
     redHue,
     70,
     70 + mid * 12
-);
+  );
 
   beginShape();
   vertex(x + pinch * 0.4, y + h * 0.22);
@@ -418,13 +393,16 @@ function drawCracks(can, x, y, w, h, crackImpact, damageAmt) {
     strokeWeight(0.7 + crackImpact * 1.35);
 
     beginShape();
+
     for (let j = 0; j < 5; j++) {
       const step = j / 4;
       const jag = (noise(can.seed + i * 13, j * 2.1, frameCount * 0.02) - 0.5) * w * 0.07 * crackImpact;
       const px = startX + cos(angle) * len * step + jag;
       const py = startY + sin(angle) * len * step + (noise(can.seed + 300, i, j) - 0.5) * h * 0.07 * crackImpact;
+
       vertex(px, py);
     }
+
     endShape();
 
     stroke(0, 0, 96, 8 + crackImpact * 18);
