@@ -109,8 +109,6 @@ Key techniques used:
 
 ### Team Member Name — User Input Mechanic
 
-Replace this name before submission.
-
 This team member was responsible for the user input mechanic. This mechanic uses mouse interaction to allow the viewer to select a specific can in the grid.
 
 The main rule is that the user can only pour a can when its mouth is already open. If the selected can is closed, it will not pour. This makes the mouse interaction depend on the time-based mechanic, so the user input and timed system work together rather than acting as separate effects.
@@ -127,9 +125,7 @@ Key techniques used:
 
 ### Zane Zhang — Audio Mechanic
 
-Replace this name before submission.
-
-This team member was responsible for the audio mechanic. This mechanic uses p5.sound to analyse uploaded audio files and microphone input. The analysed sound data changes the visual state of the cans.
+Zane was responsible for the audio mechanic. This mechanic uses p5.sound to analyse uploaded audio files and microphone input. The analysed sound data changes the visual state of the cans.
 
 The audio mechanic mainly affects the cans through shaking and twisted deformation within the frame. Louder or more energetic audio creates stronger movement, while quieter audio creates a smaller response. Microphone input allows the work to respond to live sound, while uploaded audio allows the user to test the work with a chosen track.
 
@@ -145,8 +141,6 @@ Key techniques used:
 - audio-driven movement and twisted can deformation.
 
 ### Team Member Name — Perlin Noise and Randomness Mechanic
-
-Replace this name before submission.
 
 This team member was responsible for the Perlin noise and randomness mechanic. In the final project, this mechanic mainly controls the colour behaviour of the cans.
 
