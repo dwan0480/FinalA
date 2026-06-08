@@ -1,11 +1,7 @@
-// soup-can.js
-// 这个文件专门负责画面视觉。
-// 它保留组员代码里更精细的罐头绘制方式：frame、label、金属质感、锈迹、凹痕、开盖等。
-// sketch.js 只负责调用这里的 drawFramedCan()。
-// This file was revised with ChatGPT assistance to connect the visual can drawing with the user input mechanic.
-
-
-
+// Draws one complete framed can. And reads values from user input, time-based, audio, and Perlin mechanics.
+// It keeps the detailed can drawing separate from sketch.js.
+// This code was written with help from ChatGPT. And the function uses p5 transformations such as push(), pop(), translate(), radians(),
+// rotate(), and scale().
 function drawFramedCan(can, t, level, bass, mid, treble, spectrum, crack) {
   const mxArt = artMouseX();
   const myArt = artMouseY();
@@ -15,7 +11,7 @@ function drawFramedCan(can, t, level, bass, mid, treble, spectrum, crack) {
   const clickShake = getInputShake(can);
   const timePulse = getTimePulse(can);
 
-  // 读取 user input 的新状态。
+  // Updated ststus of user input.
   const rattle = getInputRattle(can);
   const flip = getInputFlip(can);
   const squeeze = getInputSqueeze(can);
@@ -36,8 +32,7 @@ function drawFramedCan(can, t, level, bass, mid, treble, spectrum, crack) {
 
   const inputTiltDirection = can.inputTiltDirection || 1;
 
-  // rattle：点击未打开罐头时，左右快速摇晃。
-  // flip：点击已打开罐头时，慢慢倒过来，幅度比之前更大。
+
   const rattleRot = sin(frameCount * 0.9) * rattle * 15;
   const flipRot = flip * 220;
 
@@ -59,7 +54,7 @@ function drawFramedCan(can, t, level, bass, mid, treble, spectrum, crack) {
 
   push();
 
-  // rattleX / rattleY：点击未打开罐头时像被抖了一下。
+  // Shake
   let rattleX = sin(frameCount * 1.2) * rattle * 8;
   let rattleY = cos(frameCount * 1.4) * rattle * 4;
 
@@ -69,11 +64,8 @@ function drawFramedCan(can, t, level, bass, mid, treble, spectrum, crack) {
   );
 
   rotate(rot);
-
-  // 基础缩放：hover / timePulse / rattle 都可以让罐头稍微变大。
   scale(1 + hover * 0.045 + selected * 0.035 + clickShake * 0.035 + timePulse * 0.055 + rattle * 0.025);
 
-  // squeeze：点击已打开罐头时，罐头会被压扁并回弹。
   if (squeeze > 0.02) {
     let squeezeWave = abs(sin(frameCount * 0.28));
 
@@ -102,19 +94,19 @@ function drawFrame(can) {
 
   noStroke();
 
-  // 外框
+  // Outer frame
   fill(frameHue, 35, 25);
   rect(0, 0, can.w, can.h, 1);
 
-  // 中框
+  // Inner frame
   fill(frameHue, 45, 40);
   rect(bw * 0.35, bw * 0.35, can.w - bw * 0.7, can.h - bw * 0.7, 1);
 
-  // 阴影
+  //Shadow
   fill(frameHue, 30, 15, 25);
   rect(bw * 0.95, bw * 0.95, can.w - bw * 1.4, can.h - bw * 1.4, 1);
 
-  // 白色背景纸
+  // Wall paper
   fill(frameHue, 8, 96);
   rect(bw, bw, can.w - bw * 2, can.h - bw * 2, 1);
 }
@@ -132,12 +124,11 @@ function drawCan(can, t, level, bass, mid, treble, n, hover, spectrum, crackImpa
   const paperHue = 36 + can.grain * 10 + treble * 5;
   const lineAmp = 1 + bass * 3 + hover * 1.5;
 
-  // 罐头是否打开只由 time-based mechanic 管理。
-  // user input 不再直接打开罐头，hover 也不能打开罐头。
+
   const timeOpen = getTimeOpen(can);
   const openAmt = constrain(timeOpen, 0, 1);
 
-  // 读取 user input 的压扁程度，让罐身形状也跟着变形。
+// Read the degree of crushing from the user input and let the can body deform accordingly.
   const inputSqueeze = getInputSqueeze(can);
 
   const crushAmt = constrain(
@@ -227,13 +218,13 @@ function drawCan(can, t, level, bass, mid, treble, n, hover, spectrum, crackImpa
 
   drawBottomRim(x, y, w, h, crushAmt, rustAmt);
 
-  // user input 的汁液和爆汁点最后画，避免被 label / 文字盖住。
+
   drawUserInputLiquid(can, x, y, w, h);
   drawUserInputBurst(can, x, y, w, h);
 
   pop();
 }
-
+// Source: https://p5js.org/reference/p5/arc/
 function drawBottomRim(x, y, w, h, crushAmt, rustAmt) {
   const cx = x + w / 2;
   const cy = y + h * 0.925;
@@ -272,7 +263,7 @@ function drawMetalSheen(can, x, y, w, h, crushAmt, rustAmt) {
     );
   }
 }
-
+// https://p5js.org/reference/p5/beginShape/, https://p5js.org/reference/p5/bezierVertex/
 function drawLabelPaper(can, x, y, w, h, paperHue, redHue, n, mid, crushAmt) {
   const pinch = crushAmt * w * 0.08;
 
@@ -480,6 +471,8 @@ function drawAudioLines(x, y, w, h, spectrum, lineAmp) {
   endShape();
 }
 
+// Splits a long soup name into multiple lines.
+// Source: https://p5js.org/reference/p5/textWidth/
 function drawStackedLabel(label, cx, cy, maxW, maxH) {
   const words = label.split(" ");
   const lines = [];
@@ -504,7 +497,7 @@ function drawStackedLabel(label, cx, cy, maxW, maxH) {
     text(lines[i], cx, cy + (i - (lines.length - 1) / 2) * lh);
   }
 }
-
+///This panel explains the keyboard controls and audio/time/input/randomness values.
 function drawControls(level, bass, mid, treble) {
   const panelW = min(420, width - 28);
   const x = 14;
@@ -520,8 +513,8 @@ function drawControls(level, bass, mid, treble) {
   textStyle(NORMAL);
   textSize(12);
 
-  text("点击：启动音频并上传曲目   1-4：切换配色   R：重置随机种子   空格：播放/暂停", x + 12, y + 10);
-  text("音频=音量/频段；时间=事件脉冲；噪声+随机=纹理/跳动；鼠标=悬停震动和倾斜。", x + 12, y + 28);
+  text("Click: start audio / upload track   1-4: palette   R: rebuild   Space: play / pause", x + 12, y + 10);
+  text("Audio = level/frequency; Time = events; Noise = colour/texture; Mouse = input reaction.", x + 12, y + 28);
 
   drawMeter(x + 12, y + 50, panelW - 24, level, bass, mid, treble);
 }

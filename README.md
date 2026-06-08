@@ -102,7 +102,7 @@ Each team member was responsible for one distinct mechanic. This follows the pro
 ## Mechanic Ownership
 
 - Martin: Time-based mechanic. This mechanic uses `millis()` to trigger a new event every few seconds. The timed events open groups of lids, flash label text, pulse the scale of cans, and shift colours without requiring user input.
-- Team member name: User input mechanic. This mechanic uses mouse hover and clicks to highlight cans, open or close selected cans, and pour liquid. The `C` key closes all opened cans.
+- Ming Chen: User input mechanic. This mechanic uses mouse hover and clicks to highlight cans, open or close selected cans, and pour liquid. The `C` key closes all opened cans.
 - Team member name: Audio mechanic. This mechanic uses p5.sound values such as amplitude and FFT frequency energy to affect movement, label lines, and can deformation.
 - Yang Zhang: Perlin Noise mechanic. This mechanic uses Perlin Noise `noise()` to continuously change the colours of the can bodies, labels, and frames. Smooth noise values are mapped to a warm colour palette ranging from dark red, red, orange, and gold. Unlike random colour switching, Perlin Noise creates gradual and organic colour transitions that give the cans a breathing visual effect over time.
 
@@ -125,7 +125,7 @@ All final coding decisions, implementation, testing, and integration were comple
 
 ## External References
 
-### Team Member Name — User Input Mechanic
+### Ming Chen — User Input Mechanic
 
 This team member was responsible for the user input mechanic. This mechanic uses mouse interaction to allow the viewer to select a specific can in the grid.
 

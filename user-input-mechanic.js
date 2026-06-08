@@ -1,60 +1,45 @@
-// user-input-mechanic.js
 // This user input mechanic was revised with ChatGPT assistance.
-// 这个文件是我负责的 User Input Mechanic。
-// 新机制：罐头是否打开只由 time-based mechanic 管理。
-// 用户输入只负责根据罐头当前状态触发不同反应：
-// 1. 点击未打开的罐头：摇晃 / 抖动，但不打开。
-// 2. 点击 time-based 已经打开的罐头：慢慢倒过来、从罐口流汁、轻微压扁、爆出汁液点。
-// 这样不会抢组员的 time-based / audio / Perlin 机制。
-
+// The open or closed state is controlled by the time-based mechanic.
+// User input only reacts to the current state of the can.
 let INPUT_IDLE = "idle";
 let INPUT_HOVERED = "hovered";
 let INPUT_RATTLE = "rattle";
 let INPUT_POURING = "pouring";
 
 function setupUserInputStates() {
-  // 给每一个 can 添加 user input 需要的状态变量。
+    // Add user input variables to every can object.
   for (let i = 0; i < cans.length; i++) {
     let can = cans[i];
 
     can.inputState = INPUT_IDLE;
 
-    // 鼠标 hover 状态
+ 
     can.inputHoverTarget = 0;
     can.inputHoverAmount = 0;
 
-    // 点击未打开罐头时：摇晃
     can.inputRattleTarget = 0;
     can.inputRattleAmount = 0;
 
-    // 点击已打开罐头时：倒过来
     can.inputFlipTarget = 0;
     can.inputFlipAmount = 0;
 
-    // 点击已打开罐头时：压扁
     can.inputSqueezeTarget = 0;
     can.inputSqueezeAmount = 0;
 
-    // 点击已打开罐头时：流汁
     can.inputJuiceTarget = 0;
     can.inputJuiceAmount = 0;
 
-    // 点击已打开罐头时：爆汁点
     can.inputBurstTarget = 0;
     can.inputBurstAmount = 0;
 
-    // 点击反馈
     can.inputClickPulse = 0;
 
-    // 点击已打开罐头后的动作计时器。
-    // 让倒转、流汁、压扁效果保持一段时间。
+
     can.inputActionTimer = 0;
     can.inputActionDuration = 90;
 
-    // 每个罐头摇晃方向不同，避免全部动作一样。
     can.inputTiltDirection = random([-1, 1]);
 
-    // 爆汁点的位置。
     can.inputBurstDots = [];
 
     for (let j = 0; j < 8; j++) {
@@ -67,6 +52,12 @@ function setupUserInputStates() {
   }
 }
 
+// dist() 
+// map() 
+// constrain()
+// https://p5js.org/reference/p5/dist/
+// https://p5js.org/reference/p5/map/
+// https://p5js.org/reference/p5/constrain/
 function updateUserInputStates() {
   let mx = artMouseX();
   let my = artMouseY();
@@ -80,7 +71,7 @@ function updateUserInputStates() {
     let d = dist(mx, my, centerX, centerY);
     let hoverRange = min(can.w, can.h) * 0.58;
 
-    // 鼠标靠近时，进入 hover 状态。
+    // Mouse hover only creates visual feedback （not open can）.
     if (d < hoverRange) {
       let hoverPower = map(d, 0, hoverRange, 1, 0);
       hoverPower = constrain(hoverPower, 0, 1);
@@ -98,8 +89,8 @@ function updateUserInputStates() {
       }
     }
 
-    // 用 lerp 做平滑动画。
-    // flip 值小一点，所以倒过来的速度会更慢。
+    //Smooth values with lerp, similar to class examples from the course.
+    // Source: https://p5js.org/reference/p5/lerp/
     can.inputHoverAmount = lerp(can.inputHoverAmount, can.inputHoverTarget, 0.16);
     can.inputRattleAmount = lerp(can.inputRattleAmount, can.inputRattleTarget, 0.22);
     can.inputFlipAmount = lerp(can.inputFlipAmount, can.inputFlipTarget, 0.055);
@@ -107,13 +98,12 @@ function updateUserInputStates() {
     can.inputJuiceAmount = lerp(can.inputJuiceAmount, can.inputJuiceTarget, 0.12);
     can.inputBurstAmount = lerp(can.inputBurstAmount, can.inputBurstTarget, 0.14);
 
-    // 点击反馈慢慢消失。
+    
     can.inputClickPulse *= 0.86;
-
-    // 未打开罐头的摇晃动作会自动回落。
     can.inputRattleTarget *= 0.82;
 
-    // 如果正在执行“已打开罐头被点击”的动作，就保持一段时间。
+     // Keep the opened-can reaction active for a short time.
+     // https://p5js.org/reference/p5/frameCount/
     if (can.inputActionTimer > 0) {
       can.inputActionTimer--;
 
@@ -123,18 +113,18 @@ function updateUserInputStates() {
       can.inputJuiceTarget = 1;
       can.inputBurstTarget = 1;
 
-      // 压扁不是固定值，而是有“挤压—回弹”的变化。
+    
       let squeezeWave = sin(frameCount * 0.22);
       can.inputSqueezeTarget = 0.65 + abs(squeezeWave) * 0.35;
     } else {
-      // 动作结束后，效果慢慢消失。
+      
       can.inputFlipTarget *= 0.96;
       can.inputSqueezeTarget *= 0.84;
       can.inputJuiceTarget *= 0.90;
       can.inputBurstTarget *= 0.82;
     }
 
-    // 动画结束后回到 idle 或 hovered。
+    ///Return to idle or hover after the animation is finished.
     if (
       can.inputRattleAmount < 0.03 &&
       can.inputFlipAmount < 0.03 &&
@@ -155,13 +145,10 @@ function handleUserInputMousePressed() {
   let clickedCan = getCanUnderMouse();
 
   if (clickedCan !== null) {
-    // 点击时只读取 time-based 的开盖状态。
-    // user input 不负责打开罐头。
+    // Opened can: flip, squeeze, pour juice, and show splash dots.
     let isOpen = isCanOpenForUserInput(clickedCan);
 
     if (isOpen) {
-      // 如果 time-based 已经让罐头打开：
-      // 触发倒转、流汁、压扁、爆汁。
       clickedCan.inputState = INPUT_POURING;
 
       clickedCan.inputFlipTarget = 1;
@@ -179,8 +166,8 @@ function handleUserInputMousePressed() {
       clickedCan.inputClickPulse = 1;
       clickedCan.inputActionTimer = clickedCan.inputActionDuration;
     } else {
-      // 如果罐头没有打开：
-      // 只摇晃，不打开。
+      // Closed can: rattle only.
+      // User input does not open the can.
       clickedCan.inputState = INPUT_RATTLE;
 
       clickedCan.inputRattleTarget = 1;
@@ -192,8 +179,7 @@ function handleUserInputMousePressed() {
 }
 
 function handleUserInputKeyPressed(k) {
-  // C = 清除我的 user input 效果。
-  // 不会影响 time-based / audio / perlin。
+  // c can clean effect and not affect time-based / audio / perlin.
   if (k === "c" || k === "C") {
     clearAllUserInputEffects();
   }
@@ -226,8 +212,7 @@ function clearAllUserInputEffects() {
 }
 
 function isCanOpenForUserInput(can) {
-  // 罐头是否打开，只读取 time-based mechanic。
-  // 这样 mouse hover 和 user input 都不会自己打开罐头。
+// Only the time-based mechanic decides if a can is open.
   let timeOpen = getTimeOpen(can);
 
   if (timeOpen > 0.35) {
@@ -241,7 +226,6 @@ function getCanUnderMouse() {
   let mx = artMouseX();
   let my = artMouseY();
 
-  // 从后往前找，避免以后图层重叠时点错。
   for (let i = cans.length - 1; i >= 0; i--) {
     let can = cans[i];
 
@@ -258,15 +242,13 @@ function getCanUnderMouse() {
   return null;
 }
 
-// 下面这些 get 函数给 soup-can.js 使用。
 
 function getInputHover(can) {
   return can.inputHoverAmount || 0;
 }
 
+//Not useful
 function getInputSelected(can) {
-  // 新版本不再用 selected 作为主要状态。
-  // 但 soup-can.js 仍然会读取这个函数，所以保留它。
   if (can.inputState === INPUT_POURING) {
     return 1;
   }
@@ -275,8 +257,7 @@ function getInputSelected(can) {
 }
 
 function getInputOpen(can) {
-  // user input 不再打开罐头。
-  // 开罐状态由 time-based mechanic 管理。
+// User input does not open cans.
   return 0;
 }
 
@@ -317,20 +298,18 @@ function drawUserInputStateOutline(can) {
 
   noFill();
 
-  // 点击未打开罐头：蓝色摇晃边框
+  //Not Open
   if (rattle > 0.05) {
     stroke(205, 85, 95, 25 + rattle * 55);
     strokeWeight(1 + rattle * 3);
   }
 
-  // 点击已打开罐头：读取 Perlin 颜色的流汁边框
+ //Open
   else if (pour > 0.05) {
     let outlineHue = getPerlinHue(can);
     stroke(outlineHue, 95, 95, 30 + pour * 60);
     strokeWeight(2 + pour * 3);
   }
-
-  // 普通 hover
   else {
     stroke(0, 0, 100, 12 + hover * 30);
     strokeWeight(1 + hover * 2);
@@ -352,22 +331,20 @@ function drawUserInputLiquid(can, x, y, w, h) {
 
   noStroke();
 
-  // 汁液颜色读取当前罐头的 Perlin colour。
-  // 这样汁液会和当前罐身颜色状态保持一致。
+// Use the current Perlin colour of this can.
   let liquidHue = getPerlinHue(can);
   let liquidBrightness = getPerlinBrightness(can);
 
   fill(liquidHue, 90, liquidBrightness, 78);
 
-  // 罐口位置：接近 drawLid() 里的顶部盖子位置。
+ // Mouth position near the lid.
   let mouthX = x + w * 0.50;
   let mouthY = y + h * 0.10;
 
   let streamW = w * 0.15;
   let streamH = h * 0.48 * juice;
-
-  // 这里在局部坐标里往上画。
-  // 因为罐头被 rotate 倒过来后，视觉上会像从罐口向下流。
+  // Draw upward in local space.
+  // After the can flips, it looks like the juice pours down from the mouth.
   rect(mouthX - streamW / 2, mouthY - streamH, streamW, streamH, 5);
 
   ellipse(
@@ -377,7 +354,6 @@ function drawUserInputLiquid(can, x, y, w, h) {
     streamW * 0.75
   );
 
-  // 小液滴
   ellipse(
     mouthX + w * 0.13,
     mouthY - streamH * 0.65,
@@ -406,13 +382,13 @@ function drawUserInputBurst(can, x, y, w, h) {
 
   noStroke();
 
-  // 爆汁颜色也读取当前罐子的 Perlin colour。
+
   let liquidHue = getPerlinHue(can);
   let liquidBrightness = getPerlinBrightness(can);
 
   fill(liquidHue, 95, liquidBrightness, 65 * burst);
 
-  // 爆汁中心放在罐口附近。
+
   let cx = x + w * 0.50;
   let cy = y + h * 0.12;
 

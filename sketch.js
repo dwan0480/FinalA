@@ -1,11 +1,8 @@
-// sketch.js
-// 这个文件是总控制器。
-// 它负责：创建画布、创建 32 个罐头数据、更新各个 mechanic 状态、循环调用绘图函数。
-// 真正画罐头的细节放在 soup-can.js。
-// Time-based mechanic 放在 time-based-mechanic.js。
-// Audio mechanic 放在 audio-mechanic.js。
-// 我的 user input 状态系统放在 user-input-mechanic.js。
-
+// Main controller file.
+// It creates the canvas, builds the can grid, updates each mechanic,
+//and calls the drawing functions
+// from soup-can.js.
+//This code was revised with ChatGPT assistance.
 let cans = [];
 let font;
 let seedValue = 42;
@@ -20,8 +17,7 @@ let artOffsetY = 0;
 const ART_W = 1200;
 const ART_H = 721;
 
-// Museum-style interaction label.
-// updateArtworkFit() reserves space for this panel so it does not cover the artwork.
+// This label panel is kept outside the artwork area when possible.
 let labelLayout = {
   x: 0,
   y: 0,
@@ -48,7 +44,7 @@ function setup() {
   pixelDensity(min(2, window.devicePixelRatio || 1));
   textFont("Arial");
 
-  // 组员原代码使用 HSB，这里保留。
+  // The project uses HSB because the colour mechanics use hue values.
   colorMode(HSB, 360, 100, 100, 100);
 
   setupAudioMechanic();
@@ -88,8 +84,8 @@ function buildGrid() {
         wobble: random(0.6, 1.7),
         grain: random(0.15, 0.85),
 
-        // 罐头是否打开只由 time-based mechanic 管理。
-        // 所以这里不再随机开盖，避免一开始就有罐头被打开。
+        // Can opening is controlled by the time-based mechanic only.
+        // This avoids random cans being open at the start.
         lidOpen: 0,
 
         crush: random(0.03, 0.42),
@@ -102,7 +98,7 @@ function buildGrid() {
     }
   }
 
-  // 给每一个 can 加上我的 user input 状态。
+  // Set up the mechanic state values after the can objects are created.
   setupTimeBasedMechanic();
   setupUserInputStates();
 }
@@ -122,7 +118,7 @@ function draw() {
 
   drawWall();
 
-  // 每一帧更新我的 user input 状态系统。
+  // Still for useriput, update status.
   updateTimeBasedMechanic();
   updateUserInputStates();
 
@@ -153,9 +149,7 @@ function draw() {
 function updateArtworkFit() {
   const margin = 26;
 
-  // Wide screen: reserve a right-side museum label zone.
-  // The soup-can grid is fitted only into the remaining left area,
-  // so the label never covers the artwork.
+  // Wide screen: keep the label on the right side.
   if (width > 980) {
     labelLayout.mode = "side";
     labelLayout.w = constrain(width * 0.25, 320, 400);
@@ -172,7 +166,6 @@ function updateArtworkFit() {
   }
 
   // Narrow screen: place the label below the artwork.
-  // The soup-can grid is fitted into the area above the label.
   else {
     labelLayout.mode = "bottom";
     labelLayout.w = min(width - margin * 2, 560);
@@ -206,7 +199,7 @@ function drawWall() {
   fill(28, 8, 96);
   rect(0, 0, ART_W, ART_H);
 
-  // 简单墙面横纹。
+  
   for (let i = 0; i < 70; i++) {
     const y = (i * 37) % ART_H;
 
@@ -356,10 +349,8 @@ function drawTopInstruction() {
 }
 
 function mousePressed() {
-  // 浏览器需要用户手势才能启动 Web Audio。
+  
   startAudioMechanicOnUserGesture();
-
-  // 我的 user input 点击逻辑。
   handleUserInputMousePressed();
 }
 
@@ -381,7 +372,6 @@ function keyPressed() {
     openAudioUploadDialog();
   }
 
-  // M 现在只负责开关麦克风实时输入，不再开关全部 mechanic。
   if (key === "m" || key === "M") {
     toggleMicrophoneInput();
   }
@@ -390,7 +380,6 @@ function keyPressed() {
     showBackdoorHud = !showBackdoorHud;
   }
 
-  // 我的 user input 键盘逻辑。
   handleUserInputKeyPressed(key);
 }
 
