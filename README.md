@@ -1,73 +1,242 @@
 # Interactive Soup Cans
 
+## Project Overview
+
+This project is an interactive pop-art reinterpretation of Andy Warhol's *Campbell's Soup Cans*. The original work is known for its repeated soup can structure, commercial label style, flat colour areas, and the transformation of everyday consumer products into gallery artwork. Our project extends this idea into an interactive p5.js system, where repeated soup cans are displayed in a gallery-like grid but become unstable, animated, and responsive over time.
+
+The work keeps the original pop-art language readable through repeated cans, bold labels, strong colour areas, and a structured display layout. Instead of creating a static digital copy, we developed a living version of the image. The cans open and close through timed events, shift colour through Perlin noise, react to mouse selection, and respond to audio or microphone input through shaking and twisted deformation.
+
+There is a slight game-like quality in the interaction, similar to a “whack-a-mole” structure, because the user has to notice which cans are open and select them at the right moment. However, this project is not designed as a scoring game. There is no point system, win condition, or competitive goal. The focus remains on the gallery experience and on extending the spirit of Warhol's original work: repetition, commercial imagery, and the tension between mass production and individual variation.
+
+---
+
 ## Inspiration
 
-This project is an interactive reinterpretation of pop-art soup can imagery, especially the repeated grid structure and commercial label style associated with Andy Warhol's Campbell's Soup Cans. Instead of making a static copy, the work treats each can as a small animated object inside a larger grid. The repeated layout creates the visual rhythm, while the interactive mechanics make the cans feel unstable, responsive, and alive.
+### Andy Warhol and Pop Art
 
-Our team focused on keeping the original pop-art idea readable: repeated cans, bold labels, strong colour areas, and a gallery-like grid. The added mechanics change the cans through time, sound, mouse input, randomness, texture, and movement.
+Our main visual inspiration is Andy Warhol's *Campbell's Soup Cans*. We were interested in how Warhol used repeated commercial imagery to question the boundary between everyday products and fine art. The repeated can grid, bold label structure, and simple commercial visual language became the foundation of our project.
+
+We did not try to make a perfect copy of the original artwork. Instead, we focused on the visual and conceptual qualities that make the work recognisable:
+
+- repeated soup cans arranged in a clear grid;
+- bold commercial label design;
+- strong red, white, and metallic colour areas;
+- simple product-like shapes;
+- the feeling of an artwork displayed in a gallery;
+- small differences inside repetition.
+
+### Interactive Reinterpretation
+
+Our interactive version extends Warhol's repeated soup cans into a digital environment. The cans are still arranged like repeated commercial objects, but they are no longer fully stable or identical. Their states change through time, colour shifts move through the grid, user selection affects individual cans, and sound can shake or distort the display.
+
+This creates a contrast between mass-produced repetition and live digital behaviour. The cans still look like part of a repeated pop-art system, but each one can temporarily become different through animation, interaction, and audio response.
+
+---
 
 ## Techniques
 
-The project is built with p5.js. The main file, `sketch.js`, creates the canvas, builds the 8 by 4 soup can grid, updates shared values, and calls the drawing functions. The visual drawing code is separated into `soup-can.js`, while individual mechanics are kept in separate script files where possible.
+This project is built with **p5.js** and **p5.sound**. The code is organised into a main sketch file, visual drawing files, and separate mechanic files where possible. This modular structure makes the project easier to read and helps show each team member's individual contribution.
 
-Key p5.js techniques used:
+### Main p5.js Structure
 
-- `createCanvas()`, `windowResized()`, and scaling calculations are used so the artwork fits the browser window.
-- Arrays and object properties store the 32 cans and their individual positions, labels, random values, texture values, and animation states.
-- `random()` and `noise()` create small differences between cans, including rust, dents, wobble, texture, and colour variation.
-- `push()`, `pop()`, `translate()`, `rotate()`, and `scale()` position and animate each can without affecting the rest of the drawing.
-- `millis()`, `frameCount`, and timed event values drive the Time-based mechanic.
-- `lerp()` smooths changes such as lid opening, hover strength, pouring liquid, label flashing, and timed pulses.
-- `p5.FFT()` and `p5.Amplitude()` are prepared for audio-driven changes to the cans.
-- Mouse and keyboard input are used for selecting cans, opening lids, closing cans, changing palettes, and toggling mechanics.
+The project uses:
 
-The code uses modular files:
+- `createCanvas()` to create the drawing area.
+- `windowResized()` and scaling calculations so the artwork fits different browser window sizes.
+- `draw()` as the main animation loop.
+- Arrays to store the 8 by 4 grid of soup cans.
+- Object properties to store each can's position, open/closed state, selected state, colour values, animation values, and audio response values.
+- `push()` and `pop()` to isolate transformations for each can.
+- `translate()`, `rotate()`, and `scale()` to position and animate each can without affecting the rest of the drawing.
+- `millis()` and timed event logic to control the time-based opening, closing, and display movement.
+- `noise()` to create smooth Perlin-noise-based colour changes.
+- `random()` and seeded values to create repeated but slightly varied visual details where needed.
+- `lerp()` to smooth animation changes, including can movement, deformation, opening states, and pouring movement.
+- Mouse input to select cans and trigger pouring behaviour.
+- `p5.FFT()` and `p5.Amplitude()` to analyse uploaded audio or microphone input.
 
-- `index.html` loads p5.js, p5.sound, and the project scripts in the correct order.
-- `sketch.js` controls setup, the main draw loop, resizing, audio setup, and keyboard routing.
-- `soup-can.js` draws the can frames, labels, lids, metal texture, rust, dents, and visual effects.
-- `time-based-mechanic.js` controls timer-based events such as batch lid opening, colour pulses, scaling pulses, and label flickering.
-- `user-input-mechanic.js` controls hover, click selection, lid opening, pouring, and close-all behaviour.
+---
+
+## File Structure
+
+### `index.html`
+
+Loads p5.js, p5.sound, and the project script files in the correct order. This file connects the modular JavaScript files so the project can run in the browser.
+
+### `sketch.js`
+
+Controls the overall project setup and main draw loop. It creates the canvas, builds the soup can grid, stores shared variables, updates global animation states, manages resizing, handles audio setup, and routes interaction values to the relevant mechanics.
+
+### `soup-can.js`
+
+Contains the main drawing functions for the soup cans. It draws the can body, label, lid, shadows, highlights, texture, open/closed states, selected states, deformation, and pouring visuals. Keeping the drawing logic separate from the mechanic logic makes the project easier to understand.
+
+### `time-based-mechanic.js`
+
+Controls the timed behaviour of the cans. This mechanic uses `millis()` to change can states over time, including opening and closing cans and creating subtle display movement. It makes the grid feel like an active gallery installation rather than a static image.
+
+### `user-input-mechanic.js`
+
+Controls mouse-based interaction. The user can move the mouse to select a specific can. If the selected can is currently open, the user can tilt or pour it so that the contents come out. If the can is closed, it cannot pour. This creates a simple interaction rule that depends on both user input and the time-based can state.
+
+### `audio-mechanic.js`
+
+Controls the sound-responsive behaviour. It uses p5.sound to analyse uploaded audio or microphone input. The sound does not make the cans produce sound. Instead, audio data changes the visual state of the cans, mainly through shaking, vibration, and twisted deformation inside the frame.
+
+### `perlin-random-mechanic.js`
+
+Controls colour variation and smooth visual changes using Perlin noise. This mechanic uses `noise()` to shift colours in a continuous way, so the cans feel visually alive without changing too abruptly. Random or seeded values may also be used for controlled variation between repeated cans.
+
+---
 
 ## Mechanic Ownership
 
-- Martin: Time-based mechanic. This mechanic uses `millis()` to trigger a new event every few seconds. The timed events open groups of lids, flash label text, pulse the scale of cans, and shift colours without requiring user input.
-- Team member name: User input mechanic. This mechanic uses mouse hover and clicks to highlight cans, open or close selected cans, and pour liquid. The `C` key closes all opened cans.
-- Zane Zhang: Audio mechanic. This mechanic uses p5.sound values such as amplitude, FFT frequency energy, and stereo channel data to affect movement, label lines, and can deformation. Users can upload music or use the microphone for real-time interaction. Left and right channel differences also make the cans respond differently, creating a stronger stereo effect.
-- Team member name: Perlin noise and randomness mechanic. This mechanic uses `random()`, `randomSeed()`, `noise()`, and `noiseSeed()` to create variation in can damage, rust, texture, wobble, and repeated visual details.
+Each team member was responsible for one distinct mechanic. This follows the project requirement that every team member acts as the creative director for a different interaction mode.
 
-Replace the placeholder names above with the final team member names before submission.
+### Martin — Time-based Mechanic
 
-## AI Acknowledgement
+Martin was responsible for the time-based mechanic. This mechanic controls the opening and closing states of the cans and adds subtle natural display movement over time.
 
-ChatGPT was used to help plan, write, and revise parts of this project. It helped with the modular Time-based mechanic, merge conflict resolution, code checking, README drafting, and simplifying some code so it better matches class examples.
+The purpose of this mechanic is to make the repeated soup can grid feel like a live gallery installation. The cans are not all controlled by the user at once. Instead, their open and closed states change over time, which creates a rhythm across the display. This also supports the slightly “whack-a-mole-like” interaction structure, because the user has to notice when a can is open before they can pour it.
 
-The Time-based mechanic in `time-based-mechanic.js` was written with ChatGPT assistance. It works by storing timer state, calculating the current event from `millis()`, updating each can's time-based target values, and smoothing those values with `lerp()`. The code includes comments acknowledging this assistance.
+Key techniques used:
 
-## External References
+- `millis()` for tracking timed changes;
+- timed event logic for opening and closing cans;
+- per-can state values for open and closed behaviour;
+- subtle movement values to create a natural display effect;
+- `lerp()` to smooth transitions so the movement does not feel too sudden.
 
-- p5.js: https://p5js.org/  
-  Used for canvas drawing, animation, colour, transforms, mouse/keyboard input, `random()`, `noise()`, `millis()`, and other creative coding functions.
+### Team Member Name — User Input Mechanic
 
-- p5.sound: https://p5js.org/reference/#/libraries/p5.sound  
-  Used for `p5.FFT()` and `p5.Amplitude()` so audio level and frequency data can influence the artwork.
+Replace this name before submission.
 
-- Andy Warhol, Campbell's Soup Cans: https://www.moma.org/collection/works/79809  
-  Used as visual inspiration for the repeated soup can grid and pop-art reference.
+This team member was responsible for the user input mechanic. This mechanic uses mouse interaction to allow the viewer to select a specific can in the grid.
+
+The main rule is that the user can only pour a can when its mouth is already open. If the selected can is closed, it will not pour. This makes the mouse interaction depend on the time-based mechanic, so the user input and timed system work together rather than acting as separate effects.
+
+The purpose of this mechanic is to make the viewer actively observe the grid. The interaction is simple, but it creates attention and timing. The user has to identify which can is available and then interact with it at the right moment.
+
+Key techniques used:
+
+- mouse position checking for can selection;
+- selected-can state variables;
+- conditional logic to check whether a can is open before pouring;
+- pouring animation when the selected can is open;
+- `lerp()` to smooth selection and pouring movement.
+
+### Zane Zhang — Audio Mechanic
+
+Replace this name before submission.
+
+This team member was responsible for the audio mechanic. This mechanic uses p5.sound to analyse uploaded audio files and microphone input. The analysed sound data changes the visual state of the cans.
+
+The audio mechanic mainly affects the cans through shaking and twisted deformation within the frame. Louder or more energetic audio creates stronger movement, while quieter audio creates a smaller response. Microphone input allows the work to respond to live sound, while uploaded audio allows the user to test the work with a chosen track.
+
+The purpose of this mechanic is to make the gallery image feel physically affected by sound. The cans do not generate sound themselves. Instead, sound becomes a force that disturbs the repeated pop-art grid.
+
+Key techniques used:
+
+- `p5.Amplitude()` for overall audio level;
+- `p5.FFT()` for frequency-based analysis;
+- uploaded audio input;
+- microphone input;
+- smoothed audio values to avoid harsh or uncomfortable shaking;
+- audio-driven movement and twisted can deformation.
+
+### Team Member Name — Perlin Noise and Randomness Mechanic
+
+Replace this name before submission.
+
+This team member was responsible for the Perlin noise and randomness mechanic. In the final project, this mechanic mainly controls the colour behaviour of the cans.
+
+Perlin noise is used because it creates smoother, more natural changes than pure random values. Instead of colours changing suddenly, the colours shift gradually across time and across the grid. This helps the repeated cans feel alive while still keeping the gallery composition readable.
+
+The purpose of this mechanic is to introduce controlled variation into the repeated structure. Warhol's original work depends on repetition, but our version allows colour to move and change inside that repetition. This keeps the pop-art reference clear while adding a digital layer.
+
+Key techniques used:
+
+- `noise()` for smooth colour variation;
+- noise offsets for different cans;
+- gradual colour shifting over time;
+- controlled variation so the grid remains visually coherent;
+- random or seeded values where needed to support repeated but non-identical details.
+
+---
 
 ## Interaction Instructions
 
-1. Open `index.html` in a browser, or run a local server and visit the project page.
-2. Wait a few seconds to see the Time-based mechanic automatically open batches of can lids and trigger flashes or pulses.
-3. Move the mouse over the cans to create hover movement and highlight effects.
-4. Click a can to open it and make it pour liquid. Click it again to close it.
-5. Press `C` to close all cans.
-6. Press `1`, `2`, `3`, or `4` to change the colour palette.
-7. Press `M` to toggle the extra audio/noise mechanic movement.
-8. Press `U` to upload an audio file, then use the audio playback controls in the sketch.
-9. Press the space bar to pause or resume the uploaded audio.
-10. Press `R` to rebuild the grid with a new random seed.
+Open `index.html` in a browser, or run the project through a local server and visit the project page.
 
-## Notes For Submission
+### Basic Viewing
 
-Before final submission, replace the mechanic ownership placeholder names with the correct team member names. Also make sure each team member has at least three meaningful commits in the GitHub history, as required by the assignment brief.
+- Watch the cans change over time.
+- The time-based mechanic automatically opens and closes cans.
+- The display also includes subtle natural movement so the grid does not feel completely static.
+
+### Mouse Interaction
+
+- Move the mouse over the grid to select a specific can.
+- If the selected can is open, the user can pour out its contents.
+- If the selected can is closed, it will not pour.
+- This means the user needs to react to the changing open/closed states of the cans.
+
+### Audio Interaction
+
+- Press `U` to upload an audio file.
+- Use the audio playback controls in the sketch.
+- Press the `space bar` to pause or resume the uploaded audio.
+- Use microphone mode to let live sound affect the artwork.
+- Audio and microphone input change the cans through shaking and twisted deformation.
+
+### Keyboard Interaction
+
+- Press `M` to toggle the extra audio or movement response.
+- Press `R` to rebuild or refresh the grid with new random/seeded variation.
+
+
+---
+
+## AI Acknowledgement
+
+The overall creative concept, artwork selection, mechanic design, and interaction logic were developed through group discussion. AI tools were not used to create the main idea of the project or to decide the four mechanics.
+
+AI tools, including ChatGPT, were used only as coding support for some parts of the implementation. For example, AI assistance was used to help implement or debug specific functions, check code structure, resolve technical issues, and improve code comments. The team reviewed and adjusted the AI-assisted code so that it matched the project direction and the techniques we were using in p5.js.
+
+All AI-assisted code sections are acknowledged directly in the code comments. These comments explain which parts received AI support and what those parts do.
+
+AI was not used to replace the team's own creative decision-making. It was used as a technical support tool during implementation.
+
+---
+
+## External References
+
+### p5.js
+
+https://p5js.org/
+
+p5.js was used for canvas drawing, animation, colour, transformations, mouse input, keyboard input, time functions, random values, Perlin noise, and the main creative coding structure.
+
+### p5.sound
+
+https://p5js.org/reference/p5.sound/
+
+p5.sound was used for uploaded audio, microphone input, amplitude analysis, and FFT frequency analysis. These values allow sound to affect the visual state of the cans.
+
+### p5.FFT Reference
+
+https://p5js.org/reference/p5.sound/p5.FFT/
+
+This reference was used to understand how `p5.FFT()` analyses frequency data from uploaded audio or microphone input. In our project, FFT values help control visual shaking and twisted can deformation.
+
+### p5.AudioIn Reference
+
+https://p5js.org/reference/p5.sound/p5.AudioIn/
+
+This reference was used to understand how microphone input works in p5.sound. In our project, microphone input allows live sound to affect the cans visually through movement and deformation.
+
+### Andy Warhol, *Campbell's Soup Cans*
+
+https://www.moma.org/collection/works/79809
+
+Warhol's *Campbell's Soup Cans* was used as the main visual and conceptual inspiration. The repeated soup can grid, commercial label style, pop-art colour language, and gallery context shaped the visual direction of the project.
