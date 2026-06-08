@@ -127,7 +127,18 @@ function draw() {
   updateUserInputStates();
 
   for (let i = 0; i < cans.length; i++) {
-    drawFramedCan(cans[i], t, audio.level, audio.bass, audio.mid, audio.treble, audio.spectrum, audio.crack);
+    const localAudio = getStereoAudioForCan(cans[i], audio);
+
+    drawFramedCan(
+      cans[i],
+      t,
+      localAudio.level,
+      localAudio.bass,
+      localAudio.mid,
+      localAudio.treble,
+      localAudio.spectrum,
+      localAudio.crack
+    );
   }
 
   if (showBackdoorHud) {
@@ -203,6 +214,34 @@ function drawWall() {
     rect(0, y, ART_W, 2);
   }
 }
+
+
+function getStereoAudioForCan(can, audio) {
+  // canSide: 0 = left side of artwork, 1 = right side of artwork.
+  const canSide = constrain((can.x + can.w * 0.5) / ART_W, 0, 1);
+
+  // If audio.left/right are missing, fall back to normal mono behaviour.
+  const left = typeof audio.left === "number" ? audio.left : audio.level;
+  const right = typeof audio.right === "number" ? audio.right : audio.level;
+
+  const stereoAverage = max(0.001, (left + right) * 0.5);
+  const localStereo = lerp(left, right, canSide);
+
+  // If both channels are equal, this becomes almost 1.
+  // If left is stronger, left cans become stronger and right cans become calmer.
+  const stereoGain = constrain(0.62 + (localStereo / stereoAverage) * 0.38, 0.62, 1.32);
+
+  // Keep a little global sound response everywhere, but make the matching side stronger.
+  return {
+    level: constrain(audio.level * stereoGain, 0, 1),
+    bass: constrain(audio.bass * (0.82 + stereoGain * 0.28), 0, 1),
+    mid: constrain(audio.mid * (0.84 + stereoGain * 0.22), 0, 1),
+    treble: constrain(audio.treble * (0.90 + stereoGain * 0.12), 0, 1),
+    spectrum: audio.spectrum,
+    crack: constrain(audio.crack * (0.78 + stereoGain * 0.28), 0, 1)
+  };
+}
+
 
 function drawTopInstruction() {
   push();
