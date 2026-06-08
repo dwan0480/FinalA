@@ -294,8 +294,8 @@ function drawTopInstruction() {
   const instructions =
     "Move mouse: inspect cans\n" +
     "Click closed can: rattle / shake\n" +
-    "Click opened can: flip / pour / burst\n" + +
-    "M: microphone on / off   U: upload audio\n" +
+    "Click opened can: flip / pour / burst\n" +
+    "U: upload audio   M: microphone on / off\n" +
     "Space: play / pause uploaded audio\n" +
     "C: close all   1–4: palette   R: rebuild\n" +
     "Audio source: " + sourceMode;
