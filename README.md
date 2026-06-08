@@ -160,7 +160,7 @@ Key techniques used:
 
 ### Yang Zhang — Perlin Noise Mechanic
 
-This team member was responsible for the Perlin noise mechanic. In the final project, this mechanic mainly controls the colour behaviour of the cans.
+Yang Zhang was responsible for the Perlin noise mechanic. In the final project, this mechanic mainly controls the colour behaviour of the cans.
 
 Perlin noise is used because it creates smoother, more natural changes than pure random values. Instead of colours changing suddenly, the colours shift gradually across time and across the grid. This helps the repeated cans feel alive while still keeping the gallery composition readable.
 
