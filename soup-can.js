@@ -4,6 +4,8 @@
 // sketch.js 只负责调用这里的 drawFramedCan()。
 // This file was revised with ChatGPT assistance to connect the visual can drawing with the user input mechanic.
 
+
+
 function drawFramedCan(can, t, level, bass, mid, treble, spectrum, crack) {
   const mxArt = artMouseX();
   const myArt = artMouseY();
