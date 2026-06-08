@@ -217,6 +217,11 @@ function drawWall() {
 
 
 function getStereoAudioForCan(can, audio) {
+  // AI-assisted / outside-course extension:
+  // The audio mechanic calculates separate left and right channel strengths.
+  // This helper applies those values to each can based on its x position, so
+  // cans on the left react more to the left channel and cans on the right react
+  // more to the right channel.
   // canSide: 0 = left side of artwork, 1 = right side of artwork.
   const canSide = constrain((can.x + can.w * 0.5) / ART_W, 0, 1);
 

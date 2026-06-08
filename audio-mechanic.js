@@ -142,6 +142,12 @@ function shapeAudioIntensity(value, gain, curve) {
 
 
 function updateAudioStereo(active, baseLevel) {
+  // AI-assisted / outside-course technique:
+  // The normal course audio examples use p5.FFT() and p5.Amplitude().
+  // This function goes one step further by reading the uploaded sound file's
+  // raw left and right channel data from its audio buffer, so the cans on the
+  // left side can react more to the left channel and the cans on the right side
+  // can react more to the right channel.
   if (!active) {
     audioStereoLeft = 0;
     audioStereoRight = 0;
@@ -160,6 +166,10 @@ function updateAudioStereo(active, baseLevel) {
     typeof audioFile.currentTime === "function"
   ) {
     const buffer = audioFile.buffer;
+
+    // AI-assisted / outside-course technique:
+    // getChannelData(0) reads the left channel samples and getChannelData(1)
+    // reads the right channel samples from the uploaded stereo audio file.
     const leftData = buffer.getChannelData(0);
     const rightData = buffer.getChannelData(1);
 
@@ -182,6 +192,9 @@ function updateAudioStereo(active, baseLevel) {
       count++;
     }
 
+    // AI-assisted / outside-course technique:
+    // RMS means root mean square. It gives a simple loudness estimate for each
+    // stereo channel by averaging the energy of a small group of samples.
     const leftRms = sqrt(leftSum / max(1, count));
     const rightRms = sqrt(rightSum / max(1, count));
 
