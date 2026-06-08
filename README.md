@@ -158,21 +158,23 @@ Key techniques used:
 - smoothed audio values to avoid harsh or uncomfortable shaking;
 - audio-driven movement and twisted can deformation.
 
-### Team Member Name — Perlin Noise and Randomness Mechanic
+### Yang Zhang — Perlin Noise Mechanic
 
-This team member was responsible for the Perlin noise and randomness mechanic. In the final project, this mechanic mainly controls the colour behaviour of the cans.
+This team member was responsible for the Perlin noise mechanic. In the final project, this mechanic mainly controls the colour behaviour of the cans.
 
 Perlin noise is used because it creates smoother, more natural changes than pure random values. Instead of colours changing suddenly, the colours shift gradually across time and across the grid. This helps the repeated cans feel alive while still keeping the gallery composition readable.
 
-The purpose of this mechanic is to introduce controlled variation into the repeated structure. Warhol's original work depends on repetition, but our version allows colour to move and change inside that repetition. This keeps the pop-art reference clear while adding a digital layer.
+The purpose of this mechanic is to introduce controlled colour variation into the repeated structure. Warhol's original work depends on repetition, but our version allows colour to move and change inside that repetition. This keeps the pop-art reference clear while adding a digital layer.
+
+Key techniques used:
 
 Key techniques used:
 
 - `noise()` for smooth colour variation;
-- noise offsets for different cans;
-- gradual colour shifting over time;
-- controlled variation so the grid remains visually coherent;
-- random or seeded values where needed to support repeated but non-identical details.
+- `frameCount` to animate colour transitions over time;
+- unique seed values for different cans;
+- gradual colour shifting across a warm colour palette;
+- controlled variation so the grid remains visually coherent.
 
 ---
 
