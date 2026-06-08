@@ -33,7 +33,7 @@ The code uses modular files:
 
 - Martin: Time-based mechanic. This mechanic uses `millis()` to trigger a new event every few seconds. The timed events open groups of lids, flash label text, pulse the scale of cans, and shift colours without requiring user input.
 - Team member name: User input mechanic. This mechanic uses mouse hover and clicks to highlight cans, open or close selected cans, and pour liquid. The `C` key closes all opened cans.
-- Team member name: Audio mechanic. This mechanic uses p5.sound values such as amplitude and FFT frequency energy to affect movement, label lines, and can deformation.
+- Zane Zhang: Audio mechanic. This mechanic uses p5.sound values such as amplitude, FFT frequency energy, and stereo channel data to affect movement, label lines, and can deformation. Users can upload music or use the microphone for real-time interaction. Left and right channel differences also make the cans respond differently, creating a stronger stereo effect.
 - Team member name: Perlin noise and randomness mechanic. This mechanic uses `random()`, `randomSeed()`, `noise()`, and `noiseSeed()` to create variation in can damage, rust, texture, wobble, and repeated visual details.
 
 Replace the placeholder names above with the final team member names before submission.
