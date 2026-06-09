@@ -334,7 +334,7 @@ function drawTopInstruction() {
     "Click opened can: flip / pour / burst\n" +
     "U: upload audio   M: microphone on / off\n" +
     "Space: play / pause uploaded audio\n" +
-    "C: close all   1–4: palette   R: rebuild\n" +
+    "C: close all   R: rebuild\n" +
     "Audio source: " + sourceMode;
 
   text(instructions, x + 18, y + 145, panelW - 36, panelH - 152);

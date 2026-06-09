@@ -127,7 +127,7 @@ All final coding decisions, implementation, testing, and integration were comple
 
 ### Ming Chen — User Input Mechanic
 
-This team member was responsible for the user input mechanic. This mechanic uses mouse interaction to allow the viewer to select a specific can in the grid.
+Ming Chen was responsible for the user input mechanic. This mechanic uses mouse interaction to allow the viewer to select a specific can in the grid.
 
 The main rule is that the user can only pour a can when its mouth is already open. If the selected can is closed, it will not pour. This makes the mouse interaction depend on the time-based mechanic, so the user input and timed system work together rather than acting as separate effects.
 
