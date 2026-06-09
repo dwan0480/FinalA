@@ -123,7 +123,6 @@ In `perlin-noise-mechanic.js`, ChatGPT was used to better understand how Perlin 
 
 All final coding decisions, implementation, testing, and integration were completed by the project team.
 
-## External References
 
 ### Ming Chen — User Input Mechanic
 
@@ -178,11 +177,6 @@ Key techniques used:
 
 ---
 
-- The Coding Train – Perlin Noise:
-  https://www.youtube.com/watch?v=IKB1hWWedMk
-
-- p5.js Reference – noise():
-  https://p5js.org/reference/#/p5/noise
 ## Interaction Instructions
 
 Open `index.html` in a browser, or run the project through a local server and visit the project page.
