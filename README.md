@@ -254,6 +254,32 @@ https://p5js.org/reference/p5.sound/p5.AudioIn/
 
 This reference was used to understand how microphone input works in p5.sound. In our project, microphone input allows live sound to affect the cans visually through movement and deformation.
 
+### p5.js Drawing References
+
+https://p5js.org/reference/p5/arc/  
+https://p5js.org/reference/p5/beginShape/  
+https://p5js.org/reference/p5/bezierVertex/
+
+These references were used to support custom can drawing. `arc()` was used for curved can details, while `beginShape()` and `bezierVertex()` helped create curved and deformed soup can outlines.
+
+### p5.js Text and Animation References
+
+https://p5js.org/reference/p5/textWidth/  
+https://p5js.org/reference/p5/lerp/  
+https://p5js.org/reference/p5/frameCount/
+
+These references were used for smaller technical parts of the project. `textWidth()` helped split long soup names into multiple lines, `lerp()` was used to smooth animation values, and `frameCount` helped keep triggered reactions active for a short time.
+
+### Perlin Noise Tutorials
+
+The Coding Train – Perlin Noise in p5.js  
+https://www.youtube.com/watch?v=Qf4dIN99e2w
+
+The Coding Train – Perlin Noise in Two Dimensions  
+https://www.youtube.com/watch?v=ikwNrFvnL3g
+
+These tutorials were used to understand how Perlin noise can create smoother and more natural movement. In our project, this helped make the cans move more organically instead of shaking randomly.
+
 ### Andy Warhol, *Campbell's Soup Cans*
 
 https://www.moma.org/collection/works/79809
