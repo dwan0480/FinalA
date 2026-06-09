@@ -91,21 +91,6 @@ Controls colour variation and smooth visual changes using Perlin noise. This mec
 
 ## Mechanic Ownership
 
-Each team member was responsible for one distinct mechanic. This follows the project requirement that every team member acts as the creative director for a different interaction mode.
-- `index.html` loads p5.js, p5.sound, and the project scripts in the correct order.
-- `sketch.js` controls setup, the main draw loop, resizing, audio setup, and keyboard routing.
-- `soup-can.js` draws the can frames, labels, lids, metal texture, rust, dents, and visual effects.
-- `time-based-mechanic.js` controls timer-based events such as batch lid opening, scaling pulses.
-- `user-input-mechanic.js` controls hover, click selection, lid opening, pouring, and close-all behaviour. 
-- `perlin-noise-mechanic.js` (implemented within the project drawing system) controls smooth colour transitions for can bodies, labels, and frames using Perlin Noise. It uses noise(), map(), and frameCount to generate gradual colour changes across a warm palette of dark red, red, orange, and gold.
-
-## Mechanic Ownership
-
-- Martin: Time-based mechanic. This mechanic uses `millis()` to trigger a new event every few seconds. The timed events open groups of lids, flash label text, pulse the scale of cans, and shift colours without requiring user input.
-- Ming Chen: User input mechanic. This mechanic uses mouse hover and clicks to highlight cans, open or close selected cans, and pour liquid. The `C` key closes all opened cans.
-- Team member name: Audio mechanic. This mechanic uses p5.sound values such as amplitude and FFT frequency energy to affect movement, label lines, and can deformation.
-- Yang Zhang: Perlin Noise mechanic. This mechanic uses Perlin Noise `noise()` to continuously change the colours of the can bodies, labels, and frames. Smooth noise values are mapped to a warm colour palette ranging from dark red, red, orange, and gold. Unlike random colour switching, Perlin Noise creates gradual and organic colour transitions that give the cans a breathing visual effect over time.
-
 ### Martin — Time-based Mechanic
 
 Martin was responsible for the time-based mechanic. This mechanic controls the opening and closing states of the cans and adds subtle natural display movement over time.
@@ -122,7 +107,6 @@ Key techniques used:
 In `perlin-noise-mechanic.js`, ChatGPT was used to better understand how Perlin Noise could be applied to colour transitions in p5.js and to support the implementation of the Perlin Noise Colour Variation mechanic used for the can bodies, labels, and frames.
 
 All final coding decisions, implementation, testing, and integration were completed by the project team.
-
 
 ### Ming Chen — User Input Mechanic
 
